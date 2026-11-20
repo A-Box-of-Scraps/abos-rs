@@ -10,3 +10,42 @@ repository = "https://github.com/A-Box-of-Scraps/abos-rs.git"
 rust-version = "1.100.0"
 
 [workspace.dependencies]
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+# Restriction
+absolute_paths = "warn"
+allow_attributes_without_reason = "warn"
+cognitive_complexity = "warn"
+dbg_macro = "warn"
+exit = "warn"
+let_underscore_must_use = "warn"
+todo = "warn"
+undocumented_unsafe_blocks = "warn"
+unimplemented = "warn"
+unnecessary_rest_pattern = "warn"
+unnecessary_safety_comment = "warn"
+unnecessary_safety_doc = "warn"
+unused_result_ok = "warn"
+# Pedantic
+invalid_upcast_comparisons = "warn"
+redundant_closure_for_method_calls = "warn"
+should_panic_without_expect = "warn"
+too_many_lines = "warn"
+unnecessary_box_returns = "warn"
+unnecessary_debug_formatting = "warn"
+unnecessary_semicolon = "warn"
+unnecessary_trailing_comma = "warn"
+# Nursery
+branches_sharing_code = "warn"
+debug_assert_with_mut_call = "warn"
+fallible_impl_from = "warn"
+path_buf_push_overwrite = "warn"
+read_zero_byte_vec = "warn"
+significant_drop_in_scrutinee = "warn"
+unnecessary_struct_initialization = "warn"
+# Cargo
+cargo_common_metadata = "warn"
+wildcard_dependencies = "warn"
