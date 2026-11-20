@@ -6,50 +6,42 @@ dprint = "0.65.0"
 task.output = "interleave"
 task.quiet = true
 
-[tasks."check"]
-depends = ["fmt:check", "lint", "check:duplicates", "test"]
+[vars]
+cargo_workspace = "--locked --workspace"
+cargo_targets = "--all-targets"
+cargo_features = "--all-features -q"
+cargo_fmt = "--all -q"
+dprint_log = "--log-level warn"
+deny_warnings = "-D warnings"
 
-[tasks.fmt]
-run = ["mise fmt -q", "cargo fmt --all -q", "dprint fmt --log-level warn"]
+[tasks]
+check = { depends = ["fmt:check", "lint", "check:duplicates", "test"] }
+"check:duplicates" = { run = "jscpd --fail-on-empty --no-tips" }
 
-[tasks."fmt:check"]
-run = [
+fmt = { run = [
+  "mise fmt -q",
+  "cargo fmt {{vars.cargo_fmt}}",
+  "dprint fmt {{vars.dprint_log}}",
+] }
+"fmt:check" = { run = [
   "mise fmt --check -q",
-  "cargo fmt --all --check -q",
-  "dprint check --log-level warn",
-]
+  "cargo fmt {{vars.cargo_fmt}} --check",
+  "dprint check {{vars.dprint_log}}",
+] }
 
-[tasks."check:duplicates"]
-run = "jscpd --fail-on-empty --no-tips"
+build = { depends = ["build:rust"] }
+"build:rust" = { run = "cargo build {{vars.cargo_workspace}}" }
+"build:hello-world" = { run = "cargo build --locked --package hello-world" }
 
-[tasks.build]
-depends = ["build:rust"]
+lint = { depends = ["lint:rust"] }
 
-[tasks."build:rust"]
-run = "cargo build --locked --workspace"
+"lint:rust" = { depends = [
+  "lint:rust:docs",
+], run = "cargo clippy {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}} -- {{vars.deny_warnings}}" }
+"lint:rust:docs" = { env = { RUSTDOCFLAGS = "{{vars.deny_warnings}}" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} --no-deps" }
 
-[tasks."build:hello-world"]
-run = "cargo build --locked --package hello-world"
+"lint:fix" = { depends = ["lint:rust:fix"] }
+"lint:rust:fix" = { run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}}" }
 
-[tasks.lint]
-depends = "lint:rust"
-
-[tasks."lint:rust"]
-depends = "lint:rust:docs"
-run = "cargo clippy --locked --workspace --all-targets --all-features -q -- -D warnings"
-
-[tasks."lint:rust:docs"]
-env = { RUSTDOCFLAGS = "-D warnings" }
-run = "cargo doc --locked --workspace --all-features --no-deps -q"
-
-[tasks."lint:fix"]
-depends = "lint:rust:fix"
-
-[tasks."lint:rust:fix"]
-run = "cargo clippy --locked --fix --workspace --all-targets --all-features -q"
-
-[tasks."test"]
-depends = ["test:rust"]
-
-[tasks."test:rust"]
-run = "cargo test --locked --workspace --all-features --no-fail-fast -q"
+test = { depends = ["test:rust"] }
+"test:rust" = { run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} --no-fail-fast" }
