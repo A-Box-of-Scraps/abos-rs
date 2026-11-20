@@ -1,0 +1,13 @@
+# IDE config dirs
+.idea/
+.vscode/
+.zed/
+
+# Cargo
+target/
+
+# Env Variables
+.env
+
+# MacOS
+.DS_Store
