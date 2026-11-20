@@ -12,7 +12,6 @@ cargo_targets = "--all-targets"
 cargo_features = "--all-features -q"
 cargo_fmt = "--all -q"
 dprint_log = "--log-level warn"
-deny_warnings = "-D warnings"
 
 [tasks]
 # Check
@@ -41,11 +40,11 @@ lint = { depends = ["lint:rust"] }
 
 "lint:rust" = { depends = [
   "lint:rust:docs",
-], run = "cargo clippy {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}} -- {{vars.deny_warnings}}" }
-"lint:rust:docs" = { env = { RUSTDOCFLAGS = "{{vars.deny_warnings}}" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} --no-deps" }
+], env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}}" }
+"lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} --no-deps" }
 
 "lint:fix" = { depends = ["lint:rust:fix"] }
-"lint:rust:fix" = { run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}}" }
+"lint:rust:fix" = { run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}}" }
 
 # Test
 test = { depends = ["test:rust"] }
