@@ -1,0 +1,10 @@
+[tools]
+"cargo:jscpd" = "5.4.3"
+dprint = "0.65.0"
+
+[settings]
+task.output = "interleave"
+task.quiet = true
+
+[tasks.fmt]
+run = ["mise fmt -q", "cargo fmt --all -q", "dprint fmt --log-level warn"]
