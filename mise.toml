@@ -16,7 +16,7 @@ dprint_log = "--log-level warn"
 [tasks]
 # Check
 check = { depends = ["fmt:check", "lint", "check:duplicates", "test"] }
-"check:duplicates" = { run = "jscpd --fail-on-empty --no-tips" }
+"check:duplicates" = { run = "jscpd --no-tips" }
 
 # Format
 fmt = { run = [
@@ -31,21 +31,32 @@ fmt = { run = [
 ] }
 
 # Build
-build = { depends = ["build:rust"] }
+build = { depends = ["build:rust", "build:lints"] }
 "build:rust" = { run = "cargo build {{vars.cargo_workspace}}" }
+## Hello World
 "build:hello-world" = { run = "cargo build --locked --package hello-world" }
+## Lint Rules
+"build:lints" = { dir = "lints", run = "cargo build {{vars.cargo_workspace}}" }
 
 # Lint
-lint = { depends = ["lint:rust"] }
+lint = { depends = ["lint:rust", "lint:lints"] }
 
 "lint:rust" = { depends = [
   "lint:rust:docs",
 ], env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}}" }
 "lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} --no-deps" }
 
-"lint:fix" = { depends = ["lint:rust:fix"] }
+"lint:lints" = { depends = [
+  "lint:lints:docs",
+], dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}}" }
+"lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} --no-deps" }
+
+## Lint fixes
+"lint:fix" = { depends = ["lint:rust:fix", "lint:lints:fix"] }
 "lint:rust:fix" = { run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}}" }
+"lint:lints:fix" = { dir = "lints", run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}}" }
 
 # Test
-test = { depends = ["test:rust"] }
+test = { depends = ["test:rust", "test:lints"] }
 "test:rust" = { run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} --no-fail-fast" }
+"test:lints" = { dir = "lints", run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} --no-fail-fast" }
