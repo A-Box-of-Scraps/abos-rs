@@ -15,9 +15,11 @@ dprint_log = "--log-level warn"
 deny_warnings = "-D warnings"
 
 [tasks]
+# Check
 check = { depends = ["fmt:check", "lint", "check:duplicates", "test"] }
 "check:duplicates" = { run = "jscpd --fail-on-empty --no-tips" }
 
+# Format
 fmt = { run = [
   "mise fmt -q",
   "cargo fmt {{vars.cargo_fmt}}",
@@ -29,10 +31,12 @@ fmt = { run = [
   "dprint check {{vars.dprint_log}}",
 ] }
 
+# Build
 build = { depends = ["build:rust"] }
 "build:rust" = { run = "cargo build {{vars.cargo_workspace}}" }
 "build:hello-world" = { run = "cargo build --locked --package hello-world" }
 
+# Lint
 lint = { depends = ["lint:rust"] }
 
 "lint:rust" = { depends = [
@@ -43,5 +47,6 @@ lint = { depends = ["lint:rust"] }
 "lint:fix" = { depends = ["lint:rust:fix"] }
 "lint:rust:fix" = { run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}}" }
 
+# Test
 test = { depends = ["test:rust"] }
 "test:rust" = { run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} --no-fail-fast" }
