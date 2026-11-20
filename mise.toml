@@ -6,5 +6,50 @@ dprint = "0.65.0"
 task.output = "interleave"
 task.quiet = true
 
+[tasks."check"]
+depends = ["fmt:check", "lint", "check:duplicates", "test"]
+
 [tasks.fmt]
 run = ["mise fmt -q", "cargo fmt --all -q", "dprint fmt --log-level warn"]
+
+[tasks."fmt:check"]
+run = [
+  "mise fmt --check -q",
+  "cargo fmt --all --check -q",
+  "dprint check --log-level warn",
+]
+
+[tasks."check:duplicates"]
+run = "jscpd --fail-on-empty --no-tips"
+
+[tasks.build]
+depends = ["build:rust"]
+
+[tasks."build:rust"]
+run = "cargo build --locked --workspace"
+
+[tasks."build:hello-world"]
+run = "cargo build --locked --package hello-world"
+
+[tasks.lint]
+depends = "lint:rust"
+
+[tasks."lint:rust"]
+depends = "lint:rust:docs"
+run = "cargo clippy --locked --workspace --all-targets --all-features -q -- -D warnings"
+
+[tasks."lint:rust:docs"]
+env = { RUSTDOCFLAGS = "-D warnings" }
+run = "cargo doc --locked --workspace --all-features --no-deps -q"
+
+[tasks."lint:fix"]
+depends = "lint:rust:fix"
+
+[tasks."lint:rust:fix"]
+run = "cargo clippy --locked --fix --workspace --all-targets --all-features -q"
+
+[tasks."test"]
+depends = ["test:rust"]
+
+[tasks."test:rust"]
+run = "cargo test --locked --workspace --all-features --no-fail-fast -q"
