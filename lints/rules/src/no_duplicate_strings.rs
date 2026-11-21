@@ -95,7 +95,7 @@ impl LateLintPass<'_> for Pass {
 		if !expr.span.from_expansion() {
 			return;
 		}
-		let direct = self.source.collect_macro_arguments(cx, expr.span);
+		let direct: Vec<(Span, Symbol)> = self.source.collect_macro_arguments(cx, expr.span);
 		if cx.get_lint_level_spec(NO_DUPLICATE_STRINGS).level() == Level::Allow {
 			return;
 		}

@@ -89,7 +89,7 @@ fn foldable_string(expr: &ast::Expr) -> Option<(Span, Symbol)> {
 	if !expr.attrs.is_empty() {
 		return None;
 	}
-	let mut value = match &expr.kind {
+	let mut value: &ast::Expr = match &expr.kind {
 		ExprKind::Assign(_, value, _) => value.as_ref(),
 		_ => expr,
 	};
@@ -109,6 +109,15 @@ fn foldable_string(expr: &ast::Expr) -> Option<(Span, Symbol)> {
 }
 
 impl Arguments<'_> {
+	fn collect_format_value(&mut self, expr: &ast::Expr) {
+		if let Some(literal) = foldable_string(expr) {
+			self.direct.push(literal);
+		} else {
+			// Let check_lit use the surviving literal's own HIR scope.
+			self.visit_expr(expr);
+		}
+	}
+
 	fn collect_arguments(&mut self, cx: &LateContext<'_>, tokens: TokenStream, template: usize) {
 		// Read original arguments: rustc may fold formatting values into the template.
 		let mut parser = Parser::new(&cx.sess().psess, tokens, None);
@@ -121,15 +130,10 @@ impl Arguments<'_> {
 					break;
 				}
 			};
-			if index != template {
-				if index > template
-					&& let Some(literal) = foldable_string(&expr)
-				{
-					self.direct.push(literal);
-				} else {
-					// Let check_lit use the surviving literal's own HIR scope.
-					self.visit_expr(&expr);
-				}
+			if index < template {
+				self.visit_expr(&expr);
+			} else if index > template {
+				self.collect_format_value(&expr);
 			}
 			if parser.token.kind != token::Comma {
 				break;

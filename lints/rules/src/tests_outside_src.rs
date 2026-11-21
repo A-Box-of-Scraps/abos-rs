@@ -16,7 +16,7 @@ use rustc_attr_ir::find_attr;
 use rustc_errors::{Diag, DiagDecorator};
 use rustc_hir as hir;
 use rustc_lint::{EarlyContext, EarlyLintPass, LateContext, LateLintPass, LintContext, LintStore};
-use rustc_span::{BytePos, FileName, SourceFile, Span, sym};
+use rustc_span::{BytePos, FileName, SourceFile, Span, hygiene::ExpnData, sym};
 
 use self::predicate::{Truth, evaluate, test_only};
 
@@ -78,7 +78,7 @@ pub(super) fn register(store: &mut LintStore) {
 	};
 	let source: Locations = locations.clone();
 	let branches: Arc<Mutex<HashMap<Span, Span>>> = Arc::default();
-	let candidates = Arc::clone(&branches);
+	let candidates: Arc<Mutex<HashMap<Span, Span>>> = Arc::clone(&branches);
 	store.register_pre_expansion_lint_pass(Box::new(move || {
 		Box::new(SourcePass {
 			locations: source.clone(),
@@ -86,7 +86,7 @@ pub(super) fn register(store: &mut LintStore) {
 			redirected_depth: 0,
 		})
 	}));
-	let harness = locations.clone();
+	let harness: Locations = locations.clone();
 	store.register_early_lint_pass(Box::new(move || Box::new(HarnessPass(harness.clone()))));
 	store.register_late_lint_pass(Box::new(move |_| {
 		Box::new(BranchPass {
@@ -227,14 +227,13 @@ impl LateLintPass<'_> for BranchPass {
 		let hir::ExprKind::If(condition, ..) = expr.kind else {
 			return;
 		};
-		let expansion = condition.span.ctxt().outer_expn_data();
+		let expansion: ExpnData = condition.span.ctxt().outer_expn_data();
 		let Some(branch) = self.branches.remove(&expansion.call_site) else {
 			return;
 		};
-		if let Some(id) = expansion.macro_def_id
-			&& cx.tcx.item_name(id) == sym::cfg
-			&& find_attr!(cx.tcx, id, RustcBuiltinMacro { .. })
-		{
+		let Some(id) = expansion.macro_def_id else { return };
+		let builtin_cfg: bool = cx.tcx.item_name(id) == sym::cfg && find_attr!(cx.tcx, id, RustcBuiltinMacro { .. });
+		if builtin_cfg {
 			self.locations
 				.report(cx, branch, branch, "move this test-only branch outside src/");
 		}
