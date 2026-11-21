@@ -1,7 +1,10 @@
 # Table of Contents
 
-| Rule                                                        | What it checks                                                                         |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [`explicit_binding_types`](rules/explicit_binding_types.md) | Requires a type annotation when a simple binding’s initializer does not show its type. |
-| [`file_max_length`](rules/file_max_length.md)               | Limits the number of lines in each Rust source file.                                   |
-| [`tests_outside_src`](rules/tests_outside_src.md)           | Warns on tests and test-only code in the package’s src/ directory.                     |
+| Rule                                                                    | What it checks                     |
+| ----------------------------------------------------------------------- | ---------------------------------- |
+| [`explicit_binding_types`](rules/explicit_binding_types.md)             | Annotate unclear binding types.    |
+| [`file_max_length`](rules/file_max_length.md)                           | Limit lines per Rust file.         |
+| [`max_logical_operators`](rules/max_logical_operators.md)               | Limit operators per boolean chain. |
+| [`no_inline_logical_conditions`](rules/no_inline_logical_conditions.md) | Name compound conditions.          |
+| [`no_magic_numbers`](rules/no_magic_numbers.md)                         | Name numeric literals.             |
+| [`tests_outside_src`](rules/tests_outside_src.md)                       | Keep tests outside `src/`.         |
