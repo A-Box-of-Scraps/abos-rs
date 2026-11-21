@@ -1,12 +1,13 @@
 use std::fs;
 
 use dylint_testing::ui::Test;
+use tempfile::TempDir;
 
 const LIBRARY: &str = "abos_rust_rules";
 
 #[test]
 fn default_boundary() {
-	let fixtures = tempfile::tempdir().unwrap();
+	let fixtures: TempDir = tempfile::tempdir().unwrap();
 	fs::write(
 		fixtures.path().join("at_limit.rs"),
 		format!("{}fn main() {{}}\n", "\n".repeat(599)),

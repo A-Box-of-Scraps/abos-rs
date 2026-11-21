@@ -1,0 +1,187 @@
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:18:13
+   |
+LL |     let mut a = get();
+   |             ^
+   |
+   = help: add a type annotation to this binding
+   = note: `#[warn(explicit_binding_types)]` on by default
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:19:9
+   |
+LL |     let b = a.get();
+   |         ^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:20:9
+   |
+LL |     let field = b.score;
+   |         ^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:21:9
+   |
+LL |     let copy = b;
+   |         ^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:22:9
+   |
+LL |     let inferred = Vec::new();
+   |         ^^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:24:9
+   |
+LL |     let partial = Vec::<_>::new();
+   |         ^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: binding type contains a placeholder
+  --> $DIR/warnings.rs:26:17
+   |
+LL |     let nested: Vec<Option<_>> = Vec::<Option<Player>>::new();
+   |                 ^^^^^^^^^^^^^^
+   |
+   = help: write the complete type or remove the annotation; the initializer already shows the type
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:27:9
+   |
+LL |     let generic = Batch { items: [0] };
+   |         ^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:28:9
+   |
+LL |     let generic = Batch::<u8, _> { items: [0] };
+   |         ^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: binding type contains a placeholder
+  --> $DIR/warnings.rs:29:20
+   |
+LL |     let annotated: Batch<u8, _> = generic;
+   |                    ^^^^^^^^^^^^
+   |
+   = help: replace each placeholder with an explicit type or const argument
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:30:9
+   |
+LL |     let wrong_type = Changing::<u8>::new();
+   |         ^^^^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:31:9
+   |
+LL |     let alias = Alias::new();
+   |         ^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:32:9
+   |
+LL |     let alias = Alias { score: 1 };
+   |         ^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:33:9
+   |
+LL |     let ready = State::Ready;
+   |         ^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:34:9
+   |
+LL |     let failed = State::Failed(1);
+   |         ^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:35:9
+   |
+LL |     let control = if true { get() } else { get() };
+   |         ^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:36:9
+   |
+LL |     let awaited = fetch().await?;
+   |         ^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:37:9
+   |
+LL |     let mixed = (1, [get()]);
+   |         ^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:39:9
+   |
+LL |     let expanded = make!();
+   |         ^^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:41:13
+   |
+LL |         let inside = get();
+   |             ^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:44:9
+   |
+LL |     let forwarded = identity!(Player::new());
+   |         ^^^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:46:9
+   |
+LL |     let missing = Defaulted { value: 1u8 };
+   |         ^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: initializer does not show the binding's type
+  --> $DIR/warnings.rs:47:9
+   |
+LL |     let nested_arg = Vec::<Option<_>>::new();
+   |         ^^^^^^^^^^
+   |
+   = help: add a type annotation to this binding
+
+warning: 23 warnings emitted
+

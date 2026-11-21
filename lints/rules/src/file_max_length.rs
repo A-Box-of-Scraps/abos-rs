@@ -1,10 +1,10 @@
-use std::{collections::HashSet, env, path::PathBuf};
+use std::{collections::HashSet, env, path::PathBuf, sync::Arc};
 
 use dylint_linting::{declare_lint, impl_lint_pass};
 use rustc_ast::{Crate, Expr, Item, ItemKind, ModKind};
 use rustc_errors::{Diag, DiagDecorator};
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
-use rustc_span::{BytePos, FileName, Span};
+use rustc_span::{BytePos, FileName, SourceFile, Span};
 use serde::Deserialize;
 
 declare_lint! {
@@ -46,7 +46,7 @@ impl Pass {
 		if span.is_dummy() || span.from_expansion() {
 			return;
 		}
-		let file = cx.sess().source_map().lookup_source_file(span.lo());
+		let file: Arc<SourceFile> = cx.sess().source_map().lookup_source_file(span.lo());
 		if !self.seen.insert(file.start_pos) || file.is_imported() {
 			return;
 		}
@@ -57,10 +57,10 @@ impl Pass {
 		{
 			return;
 		}
-		let limit = self.config.max_lines;
+		let limit: usize = self.config.max_lines;
 		if let Some(&offset) = file.lines().get(limit) {
-			let pos = file.absolute_position(offset);
-			let count = file.count_lines();
+			let pos: BytePos = file.absolute_position(offset);
+			let count: usize = file.count_lines();
 			cx.emit_span_lint(
 				FILE_MAX_LENGTH,
 				Span::with_root_ctxt(pos, pos),

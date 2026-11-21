@@ -4,7 +4,7 @@ use std::{
 	collections::HashSet,
 	env,
 	path::PathBuf,
-	sync::{Arc, Mutex},
+	sync::{Arc, Mutex, MutexGuard},
 };
 
 use dylint_linting::{declare_lint, impl_lint_pass};
@@ -14,7 +14,7 @@ use rustc_ast::{
 };
 use rustc_errors::{Diag, DiagDecorator};
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext, LintStore};
-use rustc_span::{BytePos, FileName, Span, sym};
+use rustc_span::{BytePos, FileName, SourceFile, Span, sym};
 
 use self::predicate::{Truth, evaluate, test_only};
 
@@ -38,7 +38,7 @@ impl Locations {
 		if span.is_dummy() {
 			return None;
 		}
-		let file = cx.sess().source_map().lookup_source_file(span.lo());
+		let file: Arc<SourceFile> = cx.sess().source_map().lookup_source_file(span.lo());
 		let FileName::Real(name) = &file.name else { return None };
 		name.local_path()?.canonicalize().ok()
 	}
@@ -47,7 +47,7 @@ impl Locations {
 		if !Self::source_path(cx, label).is_some_and(|path| path.starts_with(&self.src)) {
 			return;
 		}
-		let mut regions = self.reported.lock().unwrap();
+		let mut regions: MutexGuard<'_, Vec<(BytePos, BytePos)>> = self.reported.lock().unwrap();
 		if regions.iter().any(|&(lo, hi)| lo <= label.lo() && label.hi() <= hi) {
 			return;
 		}
@@ -74,7 +74,7 @@ pub(super) fn register(store: &mut LintStore) {
 		reported: Arc::default(),
 		redirected_modules: Arc::default(),
 	};
-	let source = locations.clone();
+	let source: Locations = locations.clone();
 	store.register_pre_expansion_lint_pass(Box::new(move || {
 		Box::new(SourcePass {
 			locations: source.clone(),
@@ -111,7 +111,7 @@ impl EarlyLintPass for SourcePass {
 		};
 		// Relative paths inside inline modules depend on how the enclosing
 		// module was loaded. For redirected modules, use rustc's resolved file.
-		let redirected = self.redirected_depth > 0 || item.attrs.iter().any(predicate::may_redirect);
+		let redirected: bool = self.redirected_depth > 0 || item.attrs.iter().any(predicate::may_redirect);
 		if redirected && matches!(kind, ModKind::Unloaded) {
 			if test_only(&item.attrs) {
 				self.locations.redirected_modules.lock().unwrap().insert(item.span.lo());
@@ -156,7 +156,7 @@ impl EarlyLintPass for SourcePass {
 			return;
 		};
 		let [guard] = &args[..] else { return };
-		let branch = match (evaluate(guard, Truth::No), evaluate(guard, Truth::Yes)) {
+		let branch: Option<Span> = match (evaluate(guard, Truth::No), evaluate(guard, Truth::Yes)) {
 			(Truth::No, Truth::Yes | Truth::Unknown) => Some(then.span),
 			(Truth::Yes, Truth::No | Truth::Unknown) => otherwise.as_ref().map(|e| e.span),
 			_ => None,
@@ -184,7 +184,7 @@ impl EarlyLintPass for HarnessPass {
 			&& item.attrs.iter().any(
 				|a| matches!(&a.kind, AttrKind::Synthetic(kind) if matches!(**kind, SyntheticAttr::TestEntrypoint)),
 			) {
-			let label = function.ident.span.source_callsite();
+			let label: Span = function.ident.span.source_callsite();
 			self.0
 				.report(cx, item.span.source_callsite(), label, "move this test outside src/");
 		}

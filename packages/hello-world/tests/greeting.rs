@@ -1,8 +1,8 @@
-use std::process::Command;
+use std::process::{Command, Output};
 
 #[test]
 fn prints_greeting() {
-	let output = Command::new(env!("CARGO_BIN_EXE_hello-world"))
+	let output: Output = Command::new(env!("CARGO_BIN_EXE_hello-world"))
 		.output()
 		.expect("failed to run hello-world");
 

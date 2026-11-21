@@ -1,0 +1,10 @@
+// compile-flags: --edition=2024
+#![feature(internal_syntax, forced_keywords)]
+#![allow(internal_features)]
+#![deny(explicit_binding_types)]
+
+fn number() -> u8 { 5 }
+
+fn main() {
+    let ascribed = k#type_ascribe(number(), u8);
+}

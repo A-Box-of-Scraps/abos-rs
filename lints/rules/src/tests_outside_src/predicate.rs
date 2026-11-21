@@ -60,7 +60,7 @@ fn permits(attr: &MetaItem, test: Truth) -> Truth {
 	match (attr.name(), attr.meta_item_list()) {
 		(Some(sym::cfg), Some([guard])) => evaluate(guard, test),
 		(Some(sym::cfg_attr), Some([guard, nested @ ..])) => {
-			let enabled = nested
+			let enabled: Truth = nested
 				.iter()
 				.filter_map(MetaItemInner::meta_item)
 				.map(|attr| permits(attr, test))
