@@ -1,7 +1,9 @@
 # IDE config dirs
 .idea/
-.vscode/
-.zed/
+.vscode/**
+!.vscode/settings.json
+.zed/**
+!.zed/settings.json
 
 # Cargo
 target/
