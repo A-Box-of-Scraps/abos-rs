@@ -95,10 +95,11 @@ impl LateLintPass<'_> for Pass {
 		if !expr.span.from_expansion() {
 			return;
 		}
+		let direct = self.source.collect_macro_arguments(cx, expr.span);
 		if cx.get_lint_level_spec(NO_DUPLICATE_STRINGS).level() == Level::Allow {
 			return;
 		}
-		for (span, text) in self.source.macro_literals(cx, expr.span) {
+		for (span, text) in direct {
 			self.record(cx, expr.hir_id, span, text, None);
 		}
 	}

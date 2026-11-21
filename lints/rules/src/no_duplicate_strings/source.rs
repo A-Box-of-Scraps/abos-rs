@@ -46,13 +46,16 @@ impl EarlyLintPass for Collect {
 	}
 }
 
-struct Arguments(Vec<(Span, Symbol)>);
+struct Arguments<'a> {
+	literals: &'a mut HashSet<BytePos>,
+	direct: Vec<(Span, Symbol)>,
+}
 
-impl<'ast> Visitor<'ast> for Arguments {
+impl<'ast> Visitor<'ast> for Arguments<'_> {
 	fn visit_expr(&mut self, expr: &'ast ast::Expr) {
 		if let ExprKind::Lit(token) = expr.kind {
-			if let Ok(LitKind::Str(text, _)) = LitKind::from_token_lit(token) {
-				self.0.push((expr.span, text));
+			if matches!(token.kind, token::Str | token::StrRaw(_)) {
+				self.literals.insert(expr.span.lo());
 			}
 		} else {
 			visit::walk_expr(self, expr);
@@ -80,7 +83,32 @@ fn template_slot(name: Symbol) -> Option<usize> {
 	}
 }
 
-impl Arguments {
+// rustc can fold literals through parentheses and references, including named
+// arguments. Only use the macro's lint scope when no wrapper has attributes.
+fn foldable_string(expr: &ast::Expr) -> Option<(Span, Symbol)> {
+	if !expr.attrs.is_empty() {
+		return None;
+	}
+	let mut value = match &expr.kind {
+		ExprKind::Assign(_, value, _) => value.as_ref(),
+		_ => expr,
+	};
+	while value.attrs.is_empty() {
+		match &value.kind {
+			ExprKind::Paren(inner) | ExprKind::AddrOf(ast::BorrowKind::Ref, _, inner) => value = inner,
+			ExprKind::Lit(token) => {
+				let LitKind::Str(text, _) = LitKind::from_token_lit(*token).ok()? else {
+					return None;
+				};
+				return Some((value.span, text));
+			}
+			_ => return None,
+		}
+	}
+	None
+}
+
+impl Arguments<'_> {
 	fn collect_arguments(&mut self, cx: &LateContext<'_>, tokens: TokenStream, template: usize) {
 		// Read original arguments: rustc may fold formatting values into the template.
 		let mut parser = Parser::new(&cx.sess().psess, tokens, None);
@@ -94,7 +122,14 @@ impl Arguments {
 				}
 			};
 			if index != template {
-				self.visit_expr(&expr);
+				if index > template
+					&& let Some(literal) = foldable_string(&expr)
+				{
+					self.direct.push(literal);
+				} else {
+					// Let check_lit use the surviving literal's own HIR scope.
+					self.visit_expr(&expr);
+				}
 			}
 			if parser.token.kind != token::Comma {
 				break;
@@ -106,8 +141,11 @@ impl Arguments {
 }
 
 impl Source {
-	pub(super) fn macro_literals(&mut self, cx: &LateContext<'_>, span: Span) -> Vec<(Span, Symbol)> {
-		let mut found: Arguments = Arguments(Vec::new());
+	pub(super) fn collect_macro_arguments(&mut self, cx: &LateContext<'_>, span: Span) -> Vec<(Span, Symbol)> {
+		let mut found = Arguments {
+			literals: &mut self.literals,
+			direct: Vec::new(),
+		};
 		for expansion in span.macro_backtrace() {
 			if expansion.call_site.from_expansion() {
 				continue;
@@ -121,6 +159,6 @@ impl Source {
 			};
 			found.collect_arguments(cx, tokens, template);
 		}
-		found.0
+		found.direct
 	}
 }
