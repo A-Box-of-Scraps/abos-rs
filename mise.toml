@@ -14,24 +14,6 @@ uv = "0.13.9"
 task.output = "interleave"
 task.quiet = true
 
-[vars]
-# Arguments
-cargo_workspace = "--locked --workspace"
-cargo_features = "--all-features"
-cargo_fmt = "--all"
-quiet = "-q"
-file_line_threshold = "80"
-coverage_report = "target/coverage-summary.json"
-fmt_check = "--check"
-
-# Commands
-dylint_command = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q"
-build_command = "cargo build {{vars.cargo_workspace}}"
-clippy_command = "cargo clippy {{vars.cargo_workspace}} --all-targets {{vars.cargo_features}} {{vars.quiet}}"
-doc_command = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}} --no-deps"
-clippy_fix_command = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}}"
-fmt_command = "cargo fmt {{vars.cargo_fmt}} {{vars.quiet}}"
-
 [tasks]
 # Check
 check = { depends = ["fmt:check", "lint", "check:duplicates", "test"] }
@@ -45,41 +27,41 @@ fmt = { depends = ["fmt:rust", "fmt:lints", "fmt:config"] }
   "fmt:config:check",
 ] }
 
-"fmt:rust" = { run = "{{vars.fmt_command}}" }
-"fmt:rust:check" = { run = "{{vars.fmt_command}} {{vars.fmt_check}}" }
+"fmt:rust" = { run = "cargo fmt --all -q" }
+"fmt:rust:check" = { run = "cargo fmt --all -q --check" }
 "fmt:config" = { run = [
-  "mise fmt {{vars.quiet}}",
+  "mise fmt -q",
   "dprint fmt --log-level warn",
 ] }
 "fmt:config:check" = { run = [
-  "mise fmt {{vars.fmt_check}} {{vars.quiet}}",
+  "mise fmt --check -q",
   "dprint check --log-level warn",
 ] }
-"fmt:lints" = { dir = "lints", run = "{{vars.fmt_command}}" }
-"fmt:lints:check" = { dir = "lints", run = "{{vars.fmt_command}} {{vars.fmt_check}}" }
+"fmt:lints" = { dir = "lints", run = "cargo fmt --all -q" }
+"fmt:lints:check" = { dir = "lints", run = "cargo fmt --all -q --check" }
 
 # Build
 build = { depends = ["build:rust", "build:lints"] }
-"build:rust" = { run = "{{vars.build_command}}" }
+"build:rust" = { run = "cargo build --locked --workspace" }
 "build:hello-world" = { run = "cargo build --locked --package hello-world" }
-"build:lints" = { dir = "lints", run = "{{vars.build_command}}" }
+"build:lints" = { dir = "lints", run = "cargo build --locked --workspace" }
 
 # Lint
 lint = { depends = ["lint:rust", "lint:lints", "lint:dylint", "lint:python"] }
 
 "lint:dylint" = { depends = ["lint:dylint:packages", "lint:dylint:lints"] }
-"lint:dylint:packages" = { env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "{{vars.dylint_command}}" }
-"lint:dylint:lints" = { dir = "lints", env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "{{vars.dylint_command}}" }
+"lint:dylint:packages" = { env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q" }
+"lint:dylint:lints" = { dir = "lints", env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q" }
 
 "lint:rust" = { depends = [
   "lint:rust:docs",
-], env = { CARGO_BUILD_WARNINGS = "deny" }, run = "{{vars.clippy_command}}" }
-"lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "{{vars.doc_command}}" }
+], env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy --locked --workspace --all-targets --all-features -q" }
+"lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc --locked --workspace --all-features -q --no-deps" }
 
 "lint:lints" = { depends = [
   "lint:lints:docs",
-], dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "{{vars.clippy_command}}" }
-"lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "{{vars.doc_command}}" }
+], dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy --locked --workspace --all-targets --all-features -q" }
+"lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc --locked --workspace --all-features -q --no-deps" }
 
 "lint:python" = { run = ["ruff check scripts", "basedpyright scripts"] }
 
@@ -89,8 +71,8 @@ lint = { depends = ["lint:rust", "lint:lints", "lint:dylint", "lint:python"] }
   "lint:lints:fix",
   "lint:python:fix",
 ] }
-"lint:rust:fix" = { run = "{{vars.clippy_fix_command}}" }
-"lint:lints:fix" = { dir = "lints", run = "{{vars.clippy_fix_command}}" }
+"lint:rust:fix" = { run = "cargo clippy --fix --locked --workspace --all-features -q" }
+"lint:lints:fix" = { dir = "lints", run = "cargo clippy --fix --locked --workspace --all-features -q" }
 
 "lint:python:fix" = { run = [
   "ruff check --fix scripts",
@@ -100,8 +82,8 @@ lint = { depends = ["lint:rust", "lint:lints", "lint:dylint", "lint:python"] }
 # Test
 test = { depends = ["test:rust", "test:lints"] }
 "test:rust" = { run = [
-  "cargo llvm-cov nextest --no-clean {{vars.cargo_workspace}} --cargo-quiet {{vars.cargo_features}} --no-tests=warn --no-fail-fast --json --summary-only --output-path {{vars.coverage_report}}",
-  "python3 scripts/coverage_summary.py --min-file-lines {{vars.file_line_threshold}} < {{vars.coverage_report}}",
-  "cargo llvm-cov report {{vars.quiet}} --fail-under-file-lines {{vars.file_line_threshold}} --fail-under-lines 80 --fail-under-functions 80 --fail-under-regions 80 > /dev/null",
+  "cargo llvm-cov nextest --no-clean --locked --workspace --cargo-quiet --all-features --no-tests=warn --no-fail-fast --json --summary-only --output-path target/coverage-summary.json",
+  "python3 scripts/coverage_summary.py --min-file-lines 80 < target/coverage-summary.json",
+  "cargo llvm-cov report -q --fail-under-file-lines 80 --fail-under-lines 80 --fail-under-functions 80 --fail-under-regions 80 > /dev/null",
 ] }
-"test:lints" = { dir = "lints", run = "uv run --no-project python ../scripts/test_lints.py --min-file-lines {{vars.file_line_threshold}} --output-path {{vars.coverage_report}} {{vars.cargo_workspace}} {{vars.cargo_features}}" }
+"test:lints" = { dir = "lints", run = "uv run --no-project python ../scripts/test_lints.py --min-file-lines 80 --output-path target/coverage-summary.json --locked --workspace --all-features" }
