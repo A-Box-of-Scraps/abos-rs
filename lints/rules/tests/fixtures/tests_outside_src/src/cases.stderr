@@ -1,0 +1,67 @@
+warning: move this test-only code outside src/
+  --> $DIR/cases.rs:9:1
+   |
+LL | fn windows_fixture() {}
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(tests_outside_src)]` on by default
+
+warning: move this test-only code outside src/
+  --> $DIR/cases.rs:12:1
+   |
+LL | fn fixture() {}
+   | ^^^^^^^^^^^^^^^
+
+warning: move this test-only code outside src/
+  --> $DIR/cases.rs:24:1
+   |
+LL | / mod inline {
+LL | |     #[test]
+LL | |     fn nested() {}
+LL | | }
+   | |_^
+
+warning: move this test-only code outside src/
+  --> $DIR/cases.rs:44:5
+   |
+LL |     fixture();
+   |     ^^^^^^^^^^
+
+warning: move this test-only branch outside src/
+  --> $DIR/cases.rs:45:33
+   |
+LL |       if cfg!(all(test, windows)) {
+   |  _________________________________^
+LL | |         let _ = Token;
+LL | |     }
+   | |_____^
+
+warning: move this test-only branch outside src/
+  --> $DIR/cases.rs:48:32
+   |
+LL |       if cfg!(not(test)) {} else {
+   |  ________________________________^
+LL | |         let _ = Token;
+LL | |     }
+   | |_____^
+
+warning: move this test outside src/
+  --> $DIR/cases.rs:34:4
+   |
+LL | fn direct() {}
+   |    ^^^^^^
+
+warning: move this test outside src/
+  --> $DIR/cases.rs:37:4
+   |
+LL | fn conditional() {}
+   |    ^^^^^^^^^^^
+
+warning: move this test outside src/
+  --> $DIR/cases.rs:40:4
+   |
+LL | fn framework_test() {}
+   |    ^^^^^^^^^^^^^^
+
+warning: 9 warnings emitted
+

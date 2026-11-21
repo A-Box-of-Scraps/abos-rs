@@ -1,0 +1,10 @@
+warning: move this test-only code outside src/
+  --> $DIR/normal.rs:4:1
+   |
+LL | fn fixture() {}
+   | ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(tests_outside_src)]` on by default
+
+warning: 1 warning emitted
+
