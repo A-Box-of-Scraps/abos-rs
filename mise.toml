@@ -1,6 +1,7 @@
 [tools]
 "cargo:jscpd" = "5.4.3"
 dprint = "0.65.0"
+mold = { version = "3.0.0", os = ["linux"] }
 
 [settings]
 task.output = "interleave"
@@ -11,6 +12,10 @@ cargo_workspace = "--locked --workspace"
 cargo_targets = "--all-targets"
 cargo_features = "--all-features -q"
 cargo_fmt = "--all -q"
+cargo_no_fail_fast = "--no-fail-fast"
+cargo_fix = "--fix"
+cargo_no_deps = "--no-deps"
+fmt_check = "--check"
 dprint_log = "--log-level warn"
 
 [tasks]
@@ -19,23 +24,27 @@ check = { depends = ["fmt:check", "lint", "check:duplicates", "test"] }
 "check:duplicates" = { run = "jscpd --no-tips" }
 
 # Format
-fmt = { run = [
-  "mise fmt -q",
-  "cargo fmt {{vars.cargo_fmt}}",
-  "dprint fmt {{vars.dprint_log}}",
+fmt = { depends = ["fmt:rust", "fmt:lints", "fmt:config"] }
+"fmt:check" = { depends = [
+  "fmt:rust:check",
+  "fmt:lints:check",
+  "fmt:config:check",
 ] }
-"fmt:check" = { run = [
-  "mise fmt --check -q",
-  "cargo fmt {{vars.cargo_fmt}} --check",
+
+"fmt:rust" = { run = "cargo fmt {{vars.cargo_fmt}}" }
+"fmt:rust:check" = { run = "cargo fmt {{vars.cargo_fmt}} {{vars.fmt_check}}" }
+"fmt:config" = { run = ["mise fmt -q", "dprint fmt {{vars.dprint_log}}"] }
+"fmt:config:check" = { run = [
+  "mise fmt {{vars.fmt_check}} -q",
   "dprint check {{vars.dprint_log}}",
 ] }
+"fmt:lints" = { dir = "lints", run = "cargo fmt {{vars.cargo_fmt}}" }
+"fmt:lints:check" = { dir = "lints", run = "cargo fmt {{vars.cargo_fmt}} {{vars.fmt_check}}" }
 
 # Build
 build = { depends = ["build:rust", "build:lints"] }
 "build:rust" = { run = "cargo build {{vars.cargo_workspace}}" }
-## Hello World
 "build:hello-world" = { run = "cargo build --locked --package hello-world" }
-## Lint Rules
 "build:lints" = { dir = "lints", run = "cargo build {{vars.cargo_workspace}}" }
 
 # Lint
@@ -44,19 +53,19 @@ lint = { depends = ["lint:rust", "lint:lints"] }
 "lint:rust" = { depends = [
   "lint:rust:docs",
 ], env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}}" }
-"lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} --no-deps" }
+"lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.cargo_no_deps}}" }
 
 "lint:lints" = { depends = [
   "lint:lints:docs",
 ], dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy {{vars.cargo_workspace}} {{vars.cargo_targets}} {{vars.cargo_features}}" }
-"lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} --no-deps" }
+"lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.cargo_no_deps}}" }
 
 ## Lint fixes
 "lint:fix" = { depends = ["lint:rust:fix", "lint:lints:fix"] }
-"lint:rust:fix" = { run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}}" }
-"lint:lints:fix" = { dir = "lints", run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}}" }
+"lint:rust:fix" = { run = "cargo clippy {{vars.cargo_fix}} {{vars.cargo_workspace}} {{vars.cargo_features}}" }
+"lint:lints:fix" = { dir = "lints", run = "cargo clippy {{vars.cargo_fix}} {{vars.cargo_workspace}} {{vars.cargo_features}}" }
 
 # Test
 test = { depends = ["test:rust", "test:lints"] }
-"test:rust" = { run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} --no-fail-fast" }
-"test:lints" = { dir = "lints", run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} --no-fail-fast" }
+"test:rust" = { run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.cargo_no_fail_fast}}" }
+"test:lints" = { dir = "lints", run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.cargo_no_fail_fast}}" }
