@@ -1,0 +1,195 @@
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:4:26
+   |
+LL | const PAGE_SIZE: usize = 4 * 1024;
+   |                          ^
+   |
+   = help: use a binding or constant that names what this value represents
+   = note: `#[warn(no_magic_numbers)]` on by default
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:4:30
+   |
+LL | const PAGE_SIZE: usize = 4 * 1024;
+   |                              ^^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:5:34
+   |
+LL | fn threshold() -> usize { return 42; }
+   |                                  ^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:9:24
+   |
+LL |     let bytes = size * 1024;
+   |                        ^^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:10:20
+   |
+LL |     let _ = size > 100;
+   |                    ^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:11:44
+   |
+LL |     let _ = std::time::Duration::from_secs(30);
+   |                                            ^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:12:17
+   |
+LL |     for _ in 0..100 {}
+   |                 ^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:13:22
+   |
+LL |     let mut slots = [100, 500];
+   |                      ^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:13:27
+   |
+LL |     let mut slots = [100, 500];
+   |                           ^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:14:16
+   |
+LL |     slots[0] = 5000;
+   |                ^^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:15:13
+   |
+LL |     size += 5000;
+   |             ^^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:16:38
+   |
+LL |     let _ = Config { timeout: size + 5000 };
+   |                                      ^^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:17:17
+   |
+LL |     let _: [u8; 32] = [0; 32];
+   |                 ^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:17:27
+   |
+LL |     let _: [u8; 32] = [0; 32];
+   |                           ^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:18:22
+   |
+LL |     let _ = Buffer::<32>;
+   |                      ^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:20:9
+   |
+LL |         200..=299 => (),
+   |         ^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:20:15
+   |
+LL |         200..=299 => (),
+   |               ^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:21:9
+   |
+LL |         404 => (),
+   |         ^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:24:15
+   |
+LL |     let _ = (-42, 0xff, 0.5, 1.00000000000000001);
+   |               ^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:24:19
+   |
+LL |     let _ = (-42, 0xff, 0.5, 1.00000000000000001);
+   |                   ^^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:24:25
+   |
+LL |     let _ = (-42, 0xff, 0.5, 1.00000000000000001);
+   |                         ^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:24:30
+   |
+LL |     let _ = (-42, 0xff, 0.5, 1.00000000000000001);
+   |                              ^^^^^^^^^^^^^^^^^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:26:12
+   |
+LL |     delay!(5000);
+   |            ^^^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: numeric literal has no direct name
+  --> $DIR/warnings.rs:27:22
+   |
+LL |     assert_eq!(size, 42);
+   |                      ^^
+   |
+   = help: use a binding or constant that names what this value represents
+
+warning: 24 warnings emitted
+

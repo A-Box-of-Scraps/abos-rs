@@ -1,4 +1,4 @@
-// compile-flags: --edition=2024
+// compile-flags: --edition=2024 -A no_magic_numbers
 #![deny(explicit_binding_types)]
 use std::sync::MutexGuard;
 
