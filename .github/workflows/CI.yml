@@ -15,11 +15,6 @@ concurrency:
 
 jobs:
   check:
-    name: ${{ matrix.task }}
-    strategy:
-      fail-fast: false
-      matrix:
-        task: [lint, test]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -37,7 +32,6 @@ jobs:
       - name: Cache Cargo dependencies and build artifacts
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.task }}
           workspaces: |
             .
             lints
@@ -47,14 +41,4 @@ jobs:
         with:
           cache: true
 
-      - name: Check formatting
-        if: matrix.task == 'test'
-        run: mise run fmt:check
-
-      - name: Check duplicates
-        if: matrix.task == 'test'
-        run: mise run check:duplicates
-
-      - run: mise run "$TASK"
-        env:
-          TASK: ${{ matrix.task }}
+      - run: mise run check
