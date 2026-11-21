@@ -6,6 +6,7 @@ dprint = "0.65.0"
 mold = { version = "3.0.0", os = ["linux"] }
 ruff = "0.17.6"
 "pypi:basedpyright" = "1.40.2"
+uv = "0.13.9"
 
 [settings]
 task.output = "interleave"

@@ -4,11 +4,32 @@ import argparse
 import json
 import os
 import sys
+from typing import TypedDict, cast
 
 METRICS = ("regions", "functions", "lines")
 
 
-def coverage_row(label, summary):
+class Metric(TypedDict):
+    covered: int
+    count: int
+    percent: float
+
+
+class FileCoverage(TypedDict):
+    filename: str
+    summary: dict[str, Metric]
+
+
+class CoverageReport(TypedDict):
+    files: list[FileCoverage]
+    totals: dict[str, Metric]
+
+
+class CoverageExport(TypedDict):
+    data: list[CoverageReport]
+
+
+def coverage_row(label: str, summary: dict[str, Metric]) -> list[str]:
     row = [label]
     for name in METRICS:
         metric = summary[name]
@@ -17,16 +38,17 @@ def coverage_row(label, summary):
     return row
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--min-file-lines", type=int, required=True)
-    args = parser.parse_args()
+    _ = parser.add_argument("--min-file-lines", type=int, required=True)
+    min_file_lines = cast(int, parser.parse_args().min_file_lines)
 
-    report, = json.load(sys.stdin)["data"]
+    export = cast(CoverageExport, json.load(sys.stdin))
+    report, = export["data"]
     rows = [["File", *(name.title() for name in METRICS)]]
     for entry in report["files"]:
         lines = entry["summary"]["lines"]
-        if lines["covered"] * 100 >= args.min_file_lines * lines["count"]:
+        if lines["covered"] * 100 >= min_file_lines * lines["count"]:
             continue
         rows.append(coverage_row(os.path.relpath(entry["filename"]), entry["summary"]))
     rows.append(coverage_row("TOTAL", report["totals"]))
