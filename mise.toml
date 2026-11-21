@@ -46,7 +46,12 @@ build = { depends = ["build:packages", "build:lints"] }
 "build:lints" = { extends = "rust:build", dir = "lints" }
 
 # Check
-check = { depends = ["fmt:check", "lint", "check:duplicates", "test"] }
+check = { run = [
+  { task = "fmt:check" },
+  { task = "lint" },
+  { task = "check:duplicates" },
+  { task = "test" },
+] }
 "check:duplicates" = { run = "jscpd --no-tips" }
 
 # Format

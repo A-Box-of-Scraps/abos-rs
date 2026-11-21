@@ -15,7 +15,11 @@ serde = { version = "1", features = ["derive"] }
 tempfile = "3"
 
 [workspace.lints.rust]
+elided_lifetimes_in_paths = "warn"
+explicit_outlives_requirements = "warn"
+unreachable_pub = "warn"
 unsafe_code = "deny"
+unused_lifetimes = "warn"
 
 [workspace.lints.clippy]
 # Restriction
@@ -25,6 +29,8 @@ cognitive_complexity = "warn"
 dbg_macro = "warn"
 exit = "warn"
 let_underscore_must_use = "warn"
+rc_buffer = "warn"
+str_to_string = "warn"
 todo = "warn"
 undocumented_unsafe_blocks = "warn"
 unimplemented = "warn"
