@@ -2,6 +2,45 @@
 
 Rust utilities and lint rules shared across projects.
 
+## Project Structure
+
+Here is an overview of the project:
+
+```
+.cargo/
+.githooks/
+.github/
+lints/
+  .cargo/
+  rules/
+    docs/
+    src/
+    tests/
+    Cargo.toml
+  Cargo.lock
+  Cargo.toml
+  LICENSE
+  README.md
+  rust-toolchain.toml
+packages/
+scripts/
+target/
+.gitattributes
+.gitignore
+.jscpd.json
+AGENTS.md
+Cargo.lock
+Cargo.toml
+clippy.toml
+dprint.json
+LICENSE
+mise.toml
+README.md
+ruff.toml
+rustfmt.toml
+rust-toolchain.toml
+```
+
 ## Commits & Pull Requests
 
 - Follow the Conventional Commits specification for commit messages.
