@@ -1,0 +1,19 @@
+warning: boolean chain has 1 logical operators; maximum is 0
+  --> $DIR/zero.rs:6:10
+   |
+LL |     let _ = a && b;
+   |             ^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+   = note: requested on the command line with `-W max-logical-operators`
+
+warning: boolean chain has 1 logical operators; maximum is 0
+  --> $DIR/zero.rs:7:10
+   |
+LL |     let _ = a || b;
+   |             ^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+
+warning: 2 warnings emitted
+

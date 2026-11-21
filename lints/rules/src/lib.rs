@@ -11,6 +11,7 @@ extern crate rustc_span;
 
 mod explicit_binding_types;
 mod file_max_length;
+mod max_logical_operators;
 mod no_magic_numbers;
 mod tests_outside_src;
 
@@ -25,6 +26,7 @@ dylint_linting::dylint_library!();
 #[serde(default, deny_unknown_fields)]
 struct Config {
 	file_max_length: file_max_length::Config,
+	max_logical_operators: max_logical_operators::Config,
 }
 
 #[allow(unsafe_code, reason = "Dylint resolves this entry point by symbol name")]
@@ -35,6 +37,7 @@ pub fn register_lints(session: &Session, store: &mut LintStore) {
 	let rules: &[&Lint] = &[
 		explicit_binding_types::EXPLICIT_BINDING_TYPES,
 		file_max_length::FILE_MAX_LENGTH,
+		max_logical_operators::MAX_LOGICAL_OPERATORS,
 		no_magic_numbers::NO_MAGIC_NUMBERS,
 		tests_outside_src::TESTS_OUTSIDE_SRC,
 	];
@@ -46,6 +49,9 @@ pub fn register_lints(session: &Session, store: &mut LintStore) {
 		rules.iter().map(|rule| LintId::of(rule)).collect(),
 	);
 	store.register_early_lint_pass(Box::new(|| Box::new(no_magic_numbers::Pass::default())));
+	store.register_early_lint_pass(Box::new(move || {
+		Box::new(max_logical_operators::Pass::new(config.max_logical_operators))
+	}));
 	tests_outside_src::register(store);
 	explicit_binding_types::register(store);
 	store.register_early_lint_pass(Box::new(move || {

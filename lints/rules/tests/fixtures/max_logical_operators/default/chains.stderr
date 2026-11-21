@@ -1,0 +1,59 @@
+warning: boolean chain has 4 logical operators; maximum is 3
+  --> $DIR/chains.rs:16:10
+   |
+LL |     let _ = a && b && c && d && e;
+   |             ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+   = note: requested on the command line with `-W max-logical-operators`
+
+warning: boolean chain has 4 logical operators; maximum is 3
+  --> $DIR/chains.rs:17:10
+   |
+LL |     let _ = a || b || c || d || e;
+   |             ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+
+warning: boolean chain has 4 logical operators; maximum is 3
+  --> $DIR/chains.rs:18:10
+   |
+LL |     let _ = a && !(b || c || d || e);
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+
+warning: boolean chain has 4 logical operators; maximum is 3
+  --> $DIR/chains.rs:19:10
+   |
+LL |     let _ = a && { b || c || d || e };
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+
+warning: boolean chain has 4 logical operators; maximum is 3
+  --> $DIR/chains.rs:20:5
+   |
+LL |     if let Some(value) = Some(a) && value && c && d && e {}
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+
+warning: boolean chain has 4 logical operators; maximum is 3
+  --> $DIR/chains.rs:21:10
+   |
+LL |     assert!(a && b || c && d || e);
+   |             ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+
+warning: boolean chain has 4 logical operators; maximum is 3
+  --> $DIR/chains.rs:22:21
+   |
+LL |     let _ = generated!(a && b || c && d || e);
+   |                        ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+
+warning: 7 warnings emitted
+

@@ -137,12 +137,12 @@ impl<'tcx> LateLintPass<'tcx> for Pass {
 			return;
 		};
 		let Some(init) = local.init else { return };
-		if !matches!(local.source, LocalSource::Normal)
-			|| local.span.from_expansion()
-			|| name.span.from_expansion()
-			|| local.ty.is_some_and(|ty| !incomplete(ty))
-			|| contains_unnameable(cx.typeck_results().pat_ty(local.pat))
-		{
+		let user_written: bool =
+			matches!(local.source, LocalSource::Normal) && !local.span.from_expansion() && !name.span.from_expansion();
+		if !user_written {
+			return;
+		}
+		if local.ty.is_some_and(|ty| !incomplete(ty)) || contains_unnameable(cx.typeck_results().pat_ty(local.pat)) {
 			return;
 		}
 		let shown: bool = shows_type(cx, init, &self.0, local.span);
