@@ -1,4 +1,6 @@
 [tools]
+"aqua:taiki-e/cargo-llvm-cov" = "0.9.1"
+cargo-nextest = "0.9.152"
 "cargo:jscpd" = "5.4.3"
 dprint = "0.65.0"
 mold = { version = "3.0.0", os = ["linux"] }
@@ -12,6 +14,10 @@ cargo_workspace = "--locked --workspace"
 cargo_targets = "--all-targets"
 cargo_features = "--all-features -q"
 cargo_fmt = "--all -q"
+nextest_flags = "--cargo-quiet --all-features --no-tests=warn"
+file_line_threshold = "80"
+coverage_thresholds = "--fail-under-lines 80 --fail-under-functions 80 --fail-under-regions 80"
+coverage_report = "target/coverage-summary.json"
 cargo_no_fail_fast = "--no-fail-fast"
 cargo_fix = "--fix"
 cargo_no_deps = "--no-deps"
@@ -67,5 +73,13 @@ lint = { depends = ["lint:rust", "lint:lints"] }
 
 # Test
 test = { depends = ["test:rust", "test:lints"] }
-"test:rust" = { run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.cargo_no_fail_fast}}" }
-"test:lints" = { dir = "lints", run = "cargo test {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.cargo_no_fail_fast}}" }
+"test:rust" = { run = [
+  "cargo llvm-cov nextest --no-clean {{vars.cargo_workspace}} {{vars.nextest_flags}} {{vars.cargo_no_fail_fast}} --json --summary-only --output-path {{vars.coverage_report}}",
+  "python3 scripts/coverage_summary.py --min-file-lines {{vars.file_line_threshold}} < {{vars.coverage_report}}",
+  "cargo llvm-cov report -q --fail-under-file-lines {{vars.file_line_threshold}} {{vars.coverage_thresholds}} > /dev/null",
+] }
+"test:lints" = { dir = "lints", run = [
+  "cargo llvm-cov nextest --no-clean {{vars.cargo_workspace}} {{vars.nextest_flags}} {{vars.cargo_no_fail_fast}} --json --summary-only --output-path {{vars.coverage_report}}",
+  "python3 ../scripts/coverage_summary.py --min-file-lines {{vars.file_line_threshold}} < {{vars.coverage_report}}",
+  "cargo llvm-cov report -q --fail-under-file-lines {{vars.file_line_threshold}} {{vars.coverage_thresholds}} > /dev/null",
+] }
