@@ -16,6 +16,8 @@ workspace = true
 
 [lib]
 crate-type = ["cdylib"]
+# The UI tests exercise the loaded plugin, not a separate libtest binary.
+test = false
 
 [dependencies]
 dylint_linting.workspace = true
