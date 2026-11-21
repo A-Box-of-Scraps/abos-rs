@@ -1,0 +1,10 @@
+warning: file has 4 lines; maximum is 3
+  --> $DIR/auxiliary/long.rs:4:1
+   |
+LL | // fourth
+   | ^
+   |
+   = note: requested on the command line with `-W file-max-length`
+
+warning: 1 warning emitted
+

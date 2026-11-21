@@ -1,4 +1,6 @@
 [tools]
+"cargo:cargo-dylint" = "6.4.0"
+"cargo:dylint-link" = "6.4.0"
 "aqua:taiki-e/cargo-llvm-cov" = "0.9.1"
 cargo-nextest = "0.9.152"
 "cargo:jscpd" = "5.4.3"
@@ -54,7 +56,9 @@ build = { depends = ["build:rust", "build:lints"] }
 "build:lints" = { dir = "lints", run = "cargo build {{vars.cargo_workspace}}" }
 
 # Lint
-lint = { depends = ["lint:rust", "lint:lints", "lint:python"] }
+lint = { depends = ["lint:rust", "lint:lints", "lint:dylint", "lint:python"] }
+
+"lint:dylint" = { env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q" }
 
 "lint:rust" = { depends = [
   "lint:rust:docs",
@@ -89,8 +93,4 @@ test = { depends = ["test:rust", "test:lints"] }
   "python3 scripts/coverage_summary.py --min-file-lines {{vars.file_line_threshold}} < {{vars.coverage_report}}",
   "cargo llvm-cov report {{vars.quiet}} --fail-under-file-lines {{vars.file_line_threshold}} --fail-under-lines 80 --fail-under-functions 80 --fail-under-regions 80 > /dev/null",
 ] }
-"test:lints" = { dir = "lints", run = [
-  "cargo llvm-cov nextest --no-clean {{vars.cargo_workspace}} --cargo-quiet {{vars.cargo_features}} --no-tests=warn --no-fail-fast --json --summary-only --output-path {{vars.coverage_report}}",
-  "python3 ../scripts/coverage_summary.py --min-file-lines {{vars.file_line_threshold}} < {{vars.coverage_report}}",
-  "cargo llvm-cov report {{vars.quiet}} --fail-under-file-lines {{vars.file_line_threshold}} --fail-under-lines 80 --fail-under-functions 80 --fail-under-regions 80 > /dev/null",
-] }
+"test:lints" = { dir = "lints", run = "uv run --no-project python ../scripts/test_lints.py --min-file-lines {{vars.file_line_threshold}} --output-path {{vars.coverage_report}} {{vars.cargo_workspace}} {{vars.cargo_features}}" }

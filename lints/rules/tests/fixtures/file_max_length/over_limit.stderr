@@ -1,0 +1,10 @@
+warning: file has 601 lines; maximum is 600
+  --> $DIR/over_limit.rs:601:1
+   |
+LL | fn main() {}
+   | ^
+   |
+   = note: `#[warn(file_max_length)]` on by default
+
+warning: 1 warning emitted
+

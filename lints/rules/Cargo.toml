@@ -10,3 +10,14 @@ description = "A Box of Scraps's Rust lint rules."
 
 [lints]
 workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+dylint_linting.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+dylint_testing.workspace = true
+tempfile.workspace = true

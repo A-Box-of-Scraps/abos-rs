@@ -9,6 +9,10 @@ repository = "https://github.com/A-Box-of-Scraps/abos-rs.git"
 rust-version = "1.100.0"
 
 [workspace.dependencies]
+dylint_linting = "6.4.0"
+dylint_testing = "6.4.0"
+serde = { version = "1", features = ["derive"] }
+tempfile = "3"
 
 [workspace.lints.rust]
 unsafe_code = "deny"
