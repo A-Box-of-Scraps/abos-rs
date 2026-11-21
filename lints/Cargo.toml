@@ -52,3 +52,6 @@ unnecessary_struct_initialization = "warn"
 # Cargo
 cargo_common_metadata = "warn"
 wildcard_dependencies = "warn"
+
+[workspace.metadata.dylint]
+libraries = [{ path = "rules" }]

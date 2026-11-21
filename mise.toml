@@ -15,6 +15,7 @@ task.output = "interleave"
 task.quiet = true
 
 [vars]
+# Arguments
 cargo_workspace = "--locked --workspace"
 cargo_features = "--all-features"
 cargo_fmt = "--all"
@@ -22,6 +23,14 @@ quiet = "-q"
 file_line_threshold = "80"
 coverage_report = "target/coverage-summary.json"
 fmt_check = "--check"
+
+# Commands
+dylint_command = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q"
+build_command = "cargo build {{vars.cargo_workspace}}"
+clippy_command = "cargo clippy {{vars.cargo_workspace}} --all-targets {{vars.cargo_features}} {{vars.quiet}}"
+doc_command = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}} --no-deps"
+clippy_fix_command = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}}"
+fmt_command = "cargo fmt {{vars.cargo_fmt}} {{vars.quiet}}"
 
 [tasks]
 # Check
@@ -36,8 +45,8 @@ fmt = { depends = ["fmt:rust", "fmt:lints", "fmt:config"] }
   "fmt:config:check",
 ] }
 
-"fmt:rust" = { run = "cargo fmt {{vars.cargo_fmt}} {{vars.quiet}}" }
-"fmt:rust:check" = { run = "cargo fmt {{vars.cargo_fmt}} {{vars.quiet}} {{vars.fmt_check}}" }
+"fmt:rust" = { run = "{{vars.fmt_command}}" }
+"fmt:rust:check" = { run = "{{vars.fmt_command}} {{vars.fmt_check}}" }
 "fmt:config" = { run = [
   "mise fmt {{vars.quiet}}",
   "dprint fmt --log-level warn",
@@ -46,29 +55,31 @@ fmt = { depends = ["fmt:rust", "fmt:lints", "fmt:config"] }
   "mise fmt {{vars.fmt_check}} {{vars.quiet}}",
   "dprint check --log-level warn",
 ] }
-"fmt:lints" = { dir = "lints", run = "cargo fmt {{vars.cargo_fmt}} {{vars.quiet}}" }
-"fmt:lints:check" = { dir = "lints", run = "cargo fmt {{vars.cargo_fmt}} {{vars.quiet}} {{vars.fmt_check}}" }
+"fmt:lints" = { dir = "lints", run = "{{vars.fmt_command}}" }
+"fmt:lints:check" = { dir = "lints", run = "{{vars.fmt_command}} {{vars.fmt_check}}" }
 
 # Build
 build = { depends = ["build:rust", "build:lints"] }
-"build:rust" = { run = "cargo build {{vars.cargo_workspace}}" }
+"build:rust" = { run = "{{vars.build_command}}" }
 "build:hello-world" = { run = "cargo build --locked --package hello-world" }
-"build:lints" = { dir = "lints", run = "cargo build {{vars.cargo_workspace}}" }
+"build:lints" = { dir = "lints", run = "{{vars.build_command}}" }
 
 # Lint
 lint = { depends = ["lint:rust", "lint:lints", "lint:dylint", "lint:python"] }
 
-"lint:dylint" = { env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q" }
+"lint:dylint" = { depends = ["lint:dylint:packages", "lint:dylint:lints"] }
+"lint:dylint:packages" = { env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "{{vars.dylint_command}}" }
+"lint:dylint:lints" = { dir = "lints", env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "{{vars.dylint_command}}" }
 
 "lint:rust" = { depends = [
   "lint:rust:docs",
-], env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy {{vars.cargo_workspace}} --all-targets {{vars.cargo_features}} {{vars.quiet}}" }
-"lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}} --no-deps" }
+], env = { CARGO_BUILD_WARNINGS = "deny" }, run = "{{vars.clippy_command}}" }
+"lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "{{vars.doc_command}}" }
 
 "lint:lints" = { depends = [
   "lint:lints:docs",
-], dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy {{vars.cargo_workspace}} --all-targets {{vars.cargo_features}} {{vars.quiet}}" }
-"lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}} --no-deps" }
+], dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "{{vars.clippy_command}}" }
+"lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "{{vars.doc_command}}" }
 
 "lint:python" = { run = ["ruff check scripts", "basedpyright scripts"] }
 
@@ -78,8 +89,8 @@ lint = { depends = ["lint:rust", "lint:lints", "lint:dylint", "lint:python"] }
   "lint:lints:fix",
   "lint:python:fix",
 ] }
-"lint:rust:fix" = { run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}}" }
-"lint:lints:fix" = { dir = "lints", run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}}" }
+"lint:rust:fix" = { run = "{{vars.clippy_fix_command}}" }
+"lint:lints:fix" = { dir = "lints", run = "{{vars.clippy_fix_command}}" }
 
 "lint:python:fix" = { run = [
   "ruff check --fix scripts",
