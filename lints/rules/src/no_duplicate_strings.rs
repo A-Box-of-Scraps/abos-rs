@@ -115,15 +115,22 @@ impl LateLintPass<'_> for Pass {
 }
 
 fn report(cx: &LateContext<'_>, occurrences: &Occurrences, count: usize) {
-	let mut uses = occurrences.values().filter(|site| site.constant.is_none());
-	let Some(first) = uses.next() else { return };
+	let uses = occurrences.values().filter(|site| site.constant.is_none());
+	// max_by_key keeps the last tie; scan backwards to prefer the first equally strict use.
+	let Some(primary) = uses
+		.clone()
+		.rev()
+		.max_by_key(|site| cx.tcx.lint_level_spec_at_node(NO_DUPLICATE_STRINGS, site.id).level())
+	else {
+		return;
+	};
 	cx.tcx.emit_node_span_lint(
 		NO_DUPLICATE_STRINGS,
-		first.id,
-		first.span,
+		primary.id,
+		primary.span,
 		DiagDecorator(|diag: &mut Diag<'_>| {
 			diag.primary_message(format!("string literal appears {count} times in this file"));
-			for site in uses {
+			for site in uses.filter(|site| site.span != primary.span) {
 				diag.span_label(site.span, "also used here");
 			}
 			if let Some((span, name)) = occurrences.values().find_map(|site| Some((site.span, site.constant?))) {
