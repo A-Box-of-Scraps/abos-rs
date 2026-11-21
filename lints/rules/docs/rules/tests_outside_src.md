@@ -1,7 +1,7 @@
 # tests_outside_src
 
-Warns on registered tests and test-only code under a Cargo package’s `src/`. Move the code outside that directory;
-the rule does not require a particular destination.
+Warns on registered tests and test-only code under a Cargo package’s `src/`. Move the code outside that directory; the
+rule does not require a particular destination.
 
 ## Accepted
 

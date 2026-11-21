@@ -1,7 +1,7 @@
 # explicit_binding_types
 
-Warns when a simple `let` or `let mut` binding needs a type annotation because its initializer does not show the type.
-A written annotation may use a type alias or an inferred lifetime (`'_`), but not a type or const placeholder (`_`).
+Warns when a simple `let` or `let mut` binding needs a type annotation because its initializer does not show the type. A
+written annotation may use a type alias or an inferred lifetime (`'_`), but not a type or const placeholder (`_`).
 
 ## Accepted
 
@@ -13,10 +13,10 @@ let player = ServerPlayer::new();
 let players = Vec::<ServerPlayer>::new();
 ```
 
-Literals, casts, and explicit type ascriptions show the type. References, negation, tuples, and arrays qualify when their
-contents do. A struct literal, brace-form enum variant, or `Type::new(...)` qualifies when it names the resulting struct
-or enum. `Self` counts; a type alias in the initializer does not. For generic types, write at least one type or const
-argument and all non-default arguments. Omitted arguments must resolve to their declared defaults.
+Literals, casts, and explicit type ascriptions show the type. References, negation, tuples, and arrays qualify when
+their contents do. A struct literal, brace-form enum variant, or `Type::new(...)` qualifies when it names the resulting
+struct or enum. `Self` counts; a type alias in the initializer does not. For generic types, write at least one type or
+const argument and all non-default arguments. Omitted arguments must resolve to their declared defaults.
 
 ## Rejected
 
@@ -33,6 +33,7 @@ Annotate the first four bindings, or write `Vec::<ServerPlayer>::new()` for the 
 `Vec<ServerPlayer>` or remove the annotation: its initializer already shows the full type. Nested placeholders such as
 `Vec<Option<_>>` are also insufficient.
 
-The rule checks the initializer as written: a macro call does not show its expansion’s type. It skips generated bindings,
-destructuring, discards, uninitialized bindings, and results containing closures or opaque `impl Trait` types. It does
-not check `if let`, `while let`, match arms, or loop patterns. Use `#[allow(explicit_binding_types)]` for exceptions.
+The rule checks the initializer as written: a macro call does not show its expansion’s type. It skips generated
+bindings, destructuring, discards, uninitialized bindings, and results containing closures or opaque `impl Trait` types.
+It does not check `if let`, `while let`, match arms, or loop patterns. Use `#[allow(explicit_binding_types)]` for
+exceptions.
