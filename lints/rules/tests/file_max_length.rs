@@ -7,15 +7,16 @@ const LIBRARY: &str = "abos_rust_rules";
 
 #[test]
 fn default_boundary() {
+	const DEFAULT_MAX_LINES: usize = 600;
 	let fixtures: TempDir = tempfile::tempdir().unwrap();
 	fs::write(
 		fixtures.path().join("at_limit.rs"),
-		format!("{}fn main() {{}}\n", "\n".repeat(599)),
+		format!("{}fn main() {{}}\n", "\n".repeat(DEFAULT_MAX_LINES - 1)),
 	)
 	.unwrap();
 	fs::write(
 		fixtures.path().join("over_limit.rs"),
-		format!("{}fn main() {{}}", "\n".repeat(600)),
+		format!("{}fn main() {{}}", "\n".repeat(DEFAULT_MAX_LINES)),
 	)
 	.unwrap();
 	fs::write(

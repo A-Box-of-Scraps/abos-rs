@@ -23,7 +23,7 @@ impl_lint_pass!(Pass => [NO_MAGIC_NUMBERS]);
 
 impl Pass {
 	fn name(&mut self, expr: &Expr) {
-		let mut value = expr.peel_parens();
+		let mut value: &Expr = expr.peel_parens();
 		if let ExprKind::Unary(UnOp::Neg, operand) = &value.kind {
 			value = operand.peel_parens();
 		}
@@ -48,17 +48,17 @@ fn named_field(field: Ident) -> bool {
 // Compare the written decimal value exactly: conversion to f64 could round a nearby literal to one.
 fn exempt_float(decimal: &str) -> bool {
 	let (mantissa, exponent) = decimal.split_once(['e', 'E']).unwrap_or((decimal, "0"));
-	let integer_digits = mantissa.find('.').unwrap_or(mantissa.len());
+	let integer_digits: usize = mantissa.find('.').unwrap_or(mantissa.len());
 	let mut digits = mantissa.bytes().filter(|&b| b != b'.').enumerate();
 	let Some((position, first)) = digits.find(|&(_, b)| b != b'0') else {
 		return true;
 	};
-	let required_exponent = position as i64 + 1 - integer_digits as i64;
+	let required_exponent: i64 = position as i64 + 1 - integer_digits as i64;
 	first == b'1' && digits.all(|(_, b)| b == b'0') && exponent.parse::<i64>().ok() == Some(required_exponent)
 }
 
 fn check_literal(cx: &EarlyContext<'_>, span: Span, token: token::Lit) {
-	let warn = match LitKind::from_token_lit(token) {
+	let warn: bool = match LitKind::from_token_lit(token) {
 		Ok(LitKind::Int(value, _)) => value.get() > 1,
 		Ok(LitKind::Float(value, _)) => !exempt_float(value.as_str()),
 		_ => false,
@@ -85,9 +85,9 @@ impl EarlyLintPass for Pass {
 	}
 
 	fn check_item(&mut self, _: &EarlyContext<'_>, item: &Item) {
-		let value = match &item.kind {
-			ItemKind::Const(item) => &item.body,
-			ItemKind::Static(item) => &item.expr,
+		let value: Option<&Expr> = match &item.kind {
+			ItemKind::Const(item) => item.body.as_deref(),
+			ItemKind::Static(item) => item.expr.as_deref(),
 			_ => return,
 		};
 		if let Some(value) = value {
