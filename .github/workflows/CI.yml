@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: ["fmt:check", lint, "check:duplicates", test]
+        task: [lint, test]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -35,7 +35,6 @@ jobs:
         run: rustup toolchain install
 
       - name: Cache Cargo dependencies and build artifacts
-        if: matrix.task == 'lint' || matrix.task == 'test'
         uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.task }}
@@ -47,6 +46,14 @@ jobs:
         uses: jdx/mise-action@v5
         with:
           cache: true
+
+      - name: Check formatting
+        if: matrix.task == 'test'
+        run: mise run fmt:check
+
+      - name: Check duplicates
+        if: matrix.task == 'test'
+        run: mise run check:duplicates
 
       - run: mise run "$TASK"
         env:
