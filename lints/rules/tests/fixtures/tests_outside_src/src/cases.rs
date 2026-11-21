@@ -49,3 +49,12 @@ fn parse() {
         let _ = Token;
     }
 }
+
+mod shadowed {
+    macro_rules! cfg { (test) => { true }; }
+
+    fn check() {
+        if cfg!(test) {}
+        if std::cfg!(test) {}
+    }
+}

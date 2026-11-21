@@ -1,8 +1,8 @@
 mod predicate;
 
 use std::{
-	collections::HashSet,
-	env,
+	collections::{HashMap, HashSet},
+	env, mem,
 	path::PathBuf,
 	sync::{Arc, Mutex, MutexGuard},
 };
@@ -12,8 +12,10 @@ use rustc_ast::{
 	AssocItem, AttrKind, Attribute, Crate, Expr, ExprKind, HasAttrs, Inline, Item, ItemKind, MetaItemKind, ModKind,
 	Stmt, SyntheticAttr,
 };
+use rustc_attr_ir::find_attr;
 use rustc_errors::{Diag, DiagDecorator};
-use rustc_lint::{EarlyContext, EarlyLintPass, LintContext, LintStore};
+use rustc_hir as hir;
+use rustc_lint::{EarlyContext, EarlyLintPass, LateContext, LateLintPass, LintContext, LintStore};
 use rustc_span::{BytePos, FileName, SourceFile, Span, sym};
 
 use self::predicate::{Truth, evaluate, test_only};
@@ -34,7 +36,7 @@ struct Locations {
 }
 
 impl Locations {
-	fn source_path(cx: &EarlyContext<'_>, span: Span) -> Option<PathBuf> {
+	fn source_path(cx: &impl LintContext, span: Span) -> Option<PathBuf> {
 		if span.is_dummy() {
 			return None;
 		}
@@ -43,7 +45,7 @@ impl Locations {
 		name.local_path()?.canonicalize().ok()
 	}
 
-	fn report(&self, cx: &EarlyContext<'_>, region: Span, label: Span, message: &'static str) {
+	fn report(&self, cx: &impl LintContext, region: Span, label: Span, message: &'static str) {
 		if !Self::source_path(cx, label).is_some_and(|path| path.starts_with(&self.src)) {
 			return;
 		}
@@ -75,16 +77,27 @@ pub(super) fn register(store: &mut LintStore) {
 		redirected_modules: Arc::default(),
 	};
 	let source: Locations = locations.clone();
+	let branches: Arc<Mutex<HashMap<Span, Span>>> = Arc::default();
+	let candidates = Arc::clone(&branches);
 	store.register_pre_expansion_lint_pass(Box::new(move || {
 		Box::new(SourcePass {
 			locations: source.clone(),
+			branches: Arc::clone(&candidates),
 			redirected_depth: 0,
 		})
 	}));
-	store.register_early_lint_pass(Box::new(move || Box::new(HarnessPass(locations.clone()))));
+	let harness = locations.clone();
+	store.register_early_lint_pass(Box::new(move || Box::new(HarnessPass(harness.clone()))));
+	store.register_late_lint_pass(Box::new(move |_| {
+		Box::new(BranchPass {
+			locations: locations.clone(),
+			branches: mem::take(&mut *branches.lock().unwrap()),
+		})
+	}));
 }
 
 struct SourcePass {
+	branches: Arc<Mutex<HashMap<Span, Span>>>,
 	locations: Locations,
 	redirected_depth: usize,
 }
@@ -152,7 +165,12 @@ impl EarlyLintPass for SourcePass {
 		let ExprKind::MacCall(call) = &condition.kind else {
 			return;
 		};
-		if call.path != sym::cfg {
+		if !call
+			.path
+			.segments
+			.last()
+			.is_some_and(|segment| segment.ident.name == sym::cfg)
+		{
 			return;
 		}
 		let Some(args) = MetaItemKind::list_from_tokens(call.args.tokens.clone()) else {
@@ -165,8 +183,7 @@ impl EarlyLintPass for SourcePass {
 			_ => None,
 		};
 		if let Some(span) = branch {
-			self.locations
-				.report(cx, span, span, "move this test-only branch outside src/");
+			self.branches.lock().unwrap().insert(call.span(), span);
 		}
 	}
 }
@@ -193,6 +210,33 @@ impl EarlyLintPass for HarnessPass {
 			let label: Span = function.ident.span.source_callsite();
 			self.0
 				.report(cx, item.span.source_callsite(), label, "move this test outside src/");
+		}
+	}
+}
+
+// The source pass can read the predicate, but cannot distinguish built-in cfg!
+// from a user macro with the same name. Match the direct expansion at its call site.
+struct BranchPass {
+	locations: Locations,
+	branches: HashMap<Span, Span>,
+}
+impl_lint_pass!(BranchPass => [TESTS_OUTSIDE_SRC]);
+
+impl LateLintPass<'_> for BranchPass {
+	fn check_expr(&mut self, cx: &LateContext<'_>, expr: &hir::Expr<'_>) {
+		let hir::ExprKind::If(condition, ..) = expr.kind else {
+			return;
+		};
+		let expansion = condition.span.ctxt().outer_expn_data();
+		let Some(branch) = self.branches.remove(&expansion.call_site) else {
+			return;
+		};
+		if let Some(id) = expansion.macro_def_id
+			&& cx.tcx.item_name(id) == sym::cfg
+			&& find_attr!(cx.tcx, id, RustcBuiltinMacro { .. })
+		{
+			self.locations
+				.report(cx, branch, branch, "move this test-only branch outside src/");
 		}
 	}
 }

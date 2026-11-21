@@ -27,24 +27,6 @@ warning: move this test-only code outside src/
 LL |     fixture();
    |     ^^^^^^^^^^
 
-warning: move this test-only branch outside src/
-  --> $DIR/cases.rs:45:33
-   |
-LL |       if cfg!(all(test, windows)) {
-   |  _________________________________^
-LL | |         let _ = Token;
-LL | |     }
-   | |_____^
-
-warning: move this test-only branch outside src/
-  --> $DIR/cases.rs:48:32
-   |
-LL |       if cfg!(not(test)) {} else {
-   |  ________________________________^
-LL | |         let _ = Token;
-LL | |     }
-   | |_____^
-
 warning: move this test outside src/
   --> $DIR/cases.rs:34:4
    |
@@ -63,5 +45,29 @@ warning: move this test outside src/
 LL | fn framework_test() {}
    |    ^^^^^^^^^^^^^^
 
-warning: 9 warnings emitted
+warning: move this test-only branch outside src/
+  --> $DIR/cases.rs:45:33
+   |
+LL |       if cfg!(all(test, windows)) {
+   |  _________________________________^
+LL | |         let _ = Token;
+LL | |     }
+   | |_____^
+
+warning: move this test-only branch outside src/
+  --> $DIR/cases.rs:48:32
+   |
+LL |       if cfg!(not(test)) {} else {
+   |  ________________________________^
+LL | |         let _ = Token;
+LL | |     }
+   | |_____^
+
+warning: move this test-only branch outside src/
+  --> $DIR/cases.rs:58:28
+   |
+LL |         if std::cfg!(test) {}
+   |                            ^^
+
+warning: 10 warnings emitted
 
