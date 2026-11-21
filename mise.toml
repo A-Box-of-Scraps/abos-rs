@@ -20,68 +20,70 @@ check = { depends = ["fmt:check", "lint", "check:duplicates", "test"] }
 "check:duplicates" = { run = "jscpd --no-tips" }
 
 # Format
-fmt = { depends = ["fmt:rust", "fmt:lints", "fmt:config"] }
+fmt = { depends = ["fmt:packages", "fmt:lints", "fmt:config"] }
 "fmt:check" = { depends = [
-  "fmt:rust:check",
+  "fmt:packages:check",
   "fmt:lints:check",
   "fmt:config:check",
 ] }
 
-"fmt:rust" = { run = "cargo fmt --all -q" }
-"fmt:rust:check" = { run = "cargo fmt --all -q --check" }
+"fmt:packages" = { dir = "{{cwd}}", run = "cargo fmt --all -q" }
+"fmt:packages:check" = { dir = "{{cwd}}", run = "mise run fmt:packages -- --check" }
+
+"fmt:lints" = { dir = "lints", run = "mise run fmt:packages" }
+"fmt:lints:check" = { dir = "lints", run = "mise run fmt:packages:check" }
+
 "fmt:config" = { run = [
-  "mise fmt -q",
-  "dprint fmt --log-level warn",
+  "mise run mise:fmt",
+  "mise run dprint:fmt",
 ] }
 "fmt:config:check" = { run = [
-  "mise fmt --check -q",
-  "dprint check --log-level warn",
+  "mise run mise:fmt -- --check",
+  "mise run dprint:fmt:check",
 ] }
-"fmt:lints" = { dir = "lints", run = "cargo fmt --all -q" }
-"fmt:lints:check" = { dir = "lints", run = "cargo fmt --all -q --check" }
+
+"mise:fmt" = { run = "mise fmt" }
+
+"dprint:fmt" = { run = "dprint fmt --log-level warn" }
+"dprint:fmt:check" = { run = "dprint check --log-level warn" }
 
 # Build
-build = { depends = ["build:rust", "build:lints"] }
-"build:rust" = { run = "cargo build --locked --workspace" }
+build = { depends = ["build:packages", "build:lints"] }
+"build:packages" = { dir = "{{cwd}}", run = "cargo build --locked --workspace" }
 "build:hello-world" = { run = "cargo build --locked --package hello-world" }
-"build:lints" = { dir = "lints", run = "cargo build --locked --workspace" }
+"build:lints" = { dir = "lints", run = "mise run build:packages" }
 
 # Lint
-lint = { depends = ["lint:rust", "lint:lints", "lint:dylint", "lint:python"] }
+lint = { depends = ["lint:packages", "lint:lints", "lint:dylint", "lint:python"] }
 
 "lint:dylint" = { depends = ["lint:dylint:packages", "lint:dylint:lints"] }
-"lint:dylint:packages" = { env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q" }
-"lint:dylint:lints" = { dir = "lints", env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q" }
+"lint:dylint:packages" = { dir = "{{cwd}}", env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q" }
+"lint:dylint:lints" = { dir = "lints", run = "mise run lint:dylint:packages" }
 
-"lint:rust" = { depends = [
-  "lint:rust:docs",
-], env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy --locked --workspace --all-targets --all-features -q" }
-"lint:rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc --locked --workspace --all-features -q --no-deps" }
+"lint:packages" = { depends = [
+  "lint:packages:docs",
+], dir = "{{cwd}}", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy --locked --workspace --all-targets --all-features -q" }
+"lint:packages:docs" = { dir = "{{cwd}}", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc --locked --workspace --all-features -q --no-deps" }
 
-"lint:lints" = { depends = [
-  "lint:lints:docs",
-], dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy --locked --workspace --all-targets --all-features -q" }
-"lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc --locked --workspace --all-features -q --no-deps" }
+"lint:lints" = { dir = "lints", run = "mise run lint:packages" }
+"lint:lints:docs" = { dir = "lints", run = "mise run lint:packages:docs" }
 
 "lint:python" = { run = ["ruff check scripts", "basedpyright scripts"] }
 
 ## Lint fixes
 "lint:fix" = { depends = [
-  "lint:rust:fix",
+  "lint:packages:fix",
   "lint:lints:fix",
   "lint:python:fix",
 ] }
-"lint:rust:fix" = { run = "cargo clippy --fix --locked --workspace --all-features -q" }
-"lint:lints:fix" = { dir = "lints", run = "cargo clippy --fix --locked --workspace --all-features -q" }
+"lint:packages:fix" = { dir = "{{cwd}}", run = "cargo clippy --fix --locked --workspace --all-features -q" }
+"lint:lints:fix" = { dir = "lints", run = "mise run lint:packages:fix" }
 
-"lint:python:fix" = { run = [
-  "ruff check --fix scripts",
-  "basedpyright scripts",
-] }
+"lint:python:fix" = { run = "ruff check --fix scripts" }
 
 # Test
-test = { depends = ["test:rust", "test:lints"] }
-"test:rust" = { run = [
+test = { depends = ["test:packages", "test:lints"] }
+"test:packages" = { run = [
   "cargo llvm-cov nextest --no-clean --locked --workspace --cargo-quiet --all-features --no-tests=warn --no-fail-fast --json --summary-only --output-path target/coverage-summary.json",
   "python3 scripts/coverage_summary.py --min-file-lines 80 < target/coverage-summary.json",
   "cargo llvm-cov report -q --fail-under-file-lines 80 --fail-under-lines 80 --fail-under-functions 80 --fail-under-regions 80 > /dev/null",
