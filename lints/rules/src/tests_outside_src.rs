@@ -126,10 +126,11 @@ impl EarlyLintPass for SourcePass {
 		// module was loaded. For redirected modules, use rustc's resolved file.
 		let redirected: bool = self.redirected_depth > 0 || item.attrs.iter().any(predicate::may_redirect);
 		let defer_to_resolved_path: bool = redirected && matches!(kind, ModKind::Unloaded);
+		let defer_test_module: bool = defer_to_resolved_path && test_only(&item.attrs);
+		if defer_test_module {
+			self.locations.redirected_modules.lock().unwrap().insert(item.span.lo());
+		}
 		if defer_to_resolved_path {
-			if test_only(&item.attrs) {
-				self.locations.redirected_modules.lock().unwrap().insert(item.span.lo());
-			}
 			return;
 		}
 		if redirected {
@@ -191,16 +192,23 @@ impl EarlyLintPass for SourcePass {
 struct HarnessPass(Locations);
 impl_lint_pass!(HarnessPass => [TESTS_OUTSIDE_SRC]);
 
+impl HarnessPass {
+	fn check_redirected_module(&self, cx: &EarlyContext<'_>, item: &Item) {
+		let ItemKind::Mod(_, _, ModKind::Loaded(_, Inline::No { .. }, spans)) = &item.kind else {
+			return;
+		};
+		let redirected_into_src: bool = self.0.redirected_modules.lock().unwrap().contains(&item.span.lo())
+			&& Locations::source_path(cx, spans.inner_span).is_some_and(|path| path.starts_with(&self.0.src));
+		if redirected_into_src {
+			self.0
+				.report(cx, spans.inner_span, item.span, "move this test-only code outside src/");
+		}
+	}
+}
+
 impl EarlyLintPass for HarnessPass {
 	fn check_item(&mut self, cx: &EarlyContext<'_>, item: &Item) {
-		if let ItemKind::Mod(_, _, ModKind::Loaded(_, Inline::No { .. }, spans)) = &item.kind {
-			let redirected_into_src: bool = self.0.redirected_modules.lock().unwrap().contains(&item.span.lo())
-				&& Locations::source_path(cx, spans.inner_span).is_some_and(|path| path.starts_with(&self.0.src));
-			if redirected_into_src {
-				self.0
-					.report(cx, spans.inner_span, item.span, "move this test-only code outside src/");
-			}
-		}
+		self.check_redirected_module(cx, item);
 		let ItemKind::Fn(function) = &item.kind else { return };
 		if item
 			.attrs

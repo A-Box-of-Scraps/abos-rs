@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use dylint_linting::{declare_lint, impl_lint_pass};
 use rustc_ast::{
 	AssocItem, AssocItemKind, Expr, ExprKind, GenericParam, GenericParamKind, Item, ItemKind, LitKind, Local, NodeId,
-	PatKind, UnOp, Variant, token,
+	PatKind, StructExpr, UnOp, Variant, token,
 };
 use rustc_errors::{Diag, DiagDecorator};
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
@@ -29,6 +29,16 @@ impl Pass {
 		}
 		if matches!(value.kind, ExprKind::Lit(_)) {
 			self.named.insert(value.id);
+		}
+	}
+
+	fn is_unnamed_source_literal(&mut self, expr: &Expr) -> bool {
+		!self.named.remove(&expr.id) && !expr.span.from_expansion()
+	}
+
+	fn name_fields(&mut self, record: &StructExpr) {
+		for field in record.fields.iter().filter(|field| named_field(field.ident)) {
+			self.name(&field.expr);
 		}
 	}
 
@@ -125,16 +135,9 @@ impl EarlyLintPass for Pass {
 				ExprKind::Field(_, field) if named_field(*field) => self.name(value),
 				_ => {}
 			},
-			ExprKind::Struct(record) => {
-				for field in record.fields.iter().filter(|field| named_field(field.ident)) {
-					self.name(&field.expr);
-				}
-			}
-			ExprKind::Lit(token) => {
-				let unnamed_source_literal: bool = !self.named.remove(&expr.id) && !expr.span.from_expansion();
-				if unnamed_source_literal {
-					check_literal(cx, expr.span, *token);
-				}
+			ExprKind::Struct(record) => self.name_fields(record),
+			ExprKind::Lit(token) if self.is_unnamed_source_literal(expr) => {
+				check_literal(cx, expr.span, *token);
 			}
 			_ => {}
 		}

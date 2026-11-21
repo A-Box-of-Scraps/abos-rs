@@ -60,17 +60,16 @@ impl Pass {
 			return;
 		}
 		let limit: usize = self.config.max_lines;
-		if let Some(&offset) = file.lines().get(limit) {
-			let pos: BytePos = file.absolute_position(offset);
-			let count: usize = file.count_lines();
-			cx.emit_span_lint(
-				FILE_MAX_LENGTH,
-				Span::with_root_ctxt(pos, pos),
-				DiagDecorator(|diag: &mut Diag<'_>| {
-					diag.primary_message(format!("file has {count} lines; maximum is {limit}"));
-				}),
-			);
-		}
+		let Some(&offset) = file.lines().get(limit) else { return };
+		let pos: BytePos = file.absolute_position(offset);
+		let count: usize = file.count_lines();
+		cx.emit_span_lint(
+			FILE_MAX_LENGTH,
+			Span::with_root_ctxt(pos, pos),
+			DiagDecorator(|diag: &mut Diag<'_>| {
+				diag.primary_message(format!("file has {count} lines; maximum is {limit}"));
+			}),
+		);
 	}
 }
 

@@ -37,10 +37,9 @@ impl<'ast> Visitor<'ast> for InlineOperator {
 			// contribute directly to the enclosing condition.
 			ExprKind::If(_, then, otherwise) => {
 				self.visit_block(then)?;
-				if let Some(value) = otherwise {
-					self.visit_expr(value)?;
-				}
-				ControlFlow::Continue(())
+				otherwise
+					.as_deref()
+					.map_or(ControlFlow::Continue(()), |value| self.visit_expr(value))
 			}
 			ExprKind::Closure(..)
 			| ExprKind::Gen(..)

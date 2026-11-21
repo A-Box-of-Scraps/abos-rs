@@ -11,7 +11,7 @@ use rustc_ast::{
 };
 use rustc_lint::{EarlyContext, EarlyLintPass, LateContext, LintContext};
 use rustc_parse::parser::Parser;
-use rustc_span::{BytePos, Span, Symbol, sym};
+use rustc_span::{BytePos, Span, Symbol, hygiene::ExpnData, sym};
 
 use super::NO_DUPLICATE_STRINGS;
 
@@ -53,12 +53,11 @@ struct Arguments<'a> {
 
 impl<'ast> Visitor<'ast> for Arguments<'_> {
 	fn visit_expr(&mut self, expr: &'ast ast::Expr) {
-		if let ExprKind::Lit(token) = expr.kind {
-			if matches!(token.kind, token::Str | token::StrRaw(_)) {
-				self.literals.insert(expr.span.lo());
-			}
-		} else {
-			visit::walk_expr(self, expr);
+		let ExprKind::Lit(token) = expr.kind else {
+			return visit::walk_expr(self, expr);
+		};
+		if matches!(token.kind, token::Str | token::StrRaw(_)) {
+			self.literals.insert(expr.span.lo());
 		}
 	}
 
@@ -93,19 +92,20 @@ fn foldable_string(expr: &ast::Expr) -> Option<(Span, Symbol)> {
 		ExprKind::Assign(_, value, _) => value.as_ref(),
 		_ => expr,
 	};
-	while value.attrs.is_empty() {
-		match &value.kind {
-			ExprKind::Paren(inner) | ExprKind::AddrOf(ast::BorrowKind::Ref, _, inner) => value = inner,
-			ExprKind::Lit(token) => {
-				let LitKind::Str(text, _) = LitKind::from_token_lit(*token).ok()? else {
-					return None;
-				};
-				return Some((value.span, text));
-			}
-			_ => return None,
+	while let ExprKind::Paren(inner) | ExprKind::AddrOf(ast::BorrowKind::Ref, _, inner) = &value.kind {
+		if !value.attrs.is_empty() {
+			return None;
 		}
+		value = inner;
 	}
-	None
+	if !value.attrs.is_empty() {
+		return None;
+	}
+	let ExprKind::Lit(token) = value.kind else { return None };
+	let LitKind::Str(text, _) = LitKind::from_token_lit(token).ok()? else {
+		return None;
+	};
+	Some((value.span, text))
 }
 
 impl Arguments<'_> {
@@ -117,30 +117,30 @@ impl Arguments<'_> {
 			self.visit_expr(expr);
 		}
 	}
+}
 
-	fn collect_arguments(&mut self, cx: &LateContext<'_>, tokens: TokenStream, template: usize) {
-		// Read original arguments: rustc may fold formatting values into the template.
-		let mut parser = Parser::new(&cx.sess().psess, tokens, None);
-		let mut index: usize = 0;
-		while parser.token.kind != token::Eof {
-			let expr: Box<ast::Expr> = match parser.parse_expr() {
-				Ok(expr) => expr,
-				Err(error) => {
-					error.cancel();
-					break;
-				}
-			};
-			if index < template {
-				self.visit_expr(&expr);
-			} else if index > template {
-				self.collect_format_value(&expr);
-			}
-			if parser.token.kind != token::Comma {
+fn collect_arguments(found: &mut Arguments<'_>, cx: &LateContext<'_>, tokens: TokenStream, template: usize) {
+	// Read original arguments: rustc may fold formatting values into the template.
+	let mut parser = Parser::new(&cx.sess().psess, tokens, None);
+	let mut index: usize = 0;
+	while parser.token.kind != token::Eof {
+		let expr: Box<ast::Expr> = match parser.parse_expr() {
+			Ok(expr) => expr,
+			Err(error) => {
+				error.cancel();
 				break;
 			}
-			parser.bump();
-			index += 1;
+		};
+		if index < template {
+			found.visit_expr(&expr);
+		} else if index > template {
+			found.collect_format_value(&expr);
 		}
+		if parser.token.kind != token::Comma {
+			break;
+		}
+		parser.bump();
+		index += 1;
 	}
 }
 
@@ -150,19 +150,25 @@ impl Source {
 			literals: &mut self.literals,
 			direct: Vec::new(),
 		};
-		for expansion in span.macro_backtrace() {
-			if expansion.call_site.from_expansion() {
-				continue;
-			}
-			let Some(def) = expansion.macro_def_id else { continue };
-			let Some(template) = cx.tcx.get_diagnostic_name(def).and_then(template_slot) else {
-				continue;
-			};
-			let Some(tokens) = self.calls.remove(&expansion.call_site.lo()) else {
-				continue;
-			};
-			found.collect_arguments(cx, tokens, template);
+		for (tokens, template) in span
+			.macro_backtrace()
+			.filter_map(|expansion| take_format_call(&mut self.calls, cx, expansion))
+		{
+			collect_arguments(&mut found, cx, tokens, template);
 		}
 		found.direct
 	}
+}
+
+fn take_format_call(
+	calls: &mut HashMap<BytePos, TokenStream>,
+	cx: &LateContext<'_>,
+	expansion: ExpnData,
+) -> Option<(TokenStream, usize)> {
+	if expansion.call_site.from_expansion() {
+		return None;
+	}
+	let name: Symbol = cx.tcx.get_diagnostic_name(expansion.macro_def_id?)?;
+	let template: usize = template_slot(name)?;
+	Some((calls.remove(&expansion.call_site.lo())?, template))
 }

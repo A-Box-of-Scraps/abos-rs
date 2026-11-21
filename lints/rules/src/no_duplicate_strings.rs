@@ -105,12 +105,12 @@ impl LateLintPass<'_> for Pass {
 	}
 
 	fn check_crate_post(&mut self, cx: &LateContext<'_>) {
-		for occurrences in self.groups.values() {
-			let count: usize = occurrences.len();
-			if count < self.config.threshold {
-				continue;
-			}
-			report(cx, occurrences, count);
+		for occurrences in self
+			.groups
+			.values()
+			.filter(|sites| sites.len() >= self.config.threshold)
+		{
+			report(cx, occurrences, occurrences.len());
 		}
 	}
 }

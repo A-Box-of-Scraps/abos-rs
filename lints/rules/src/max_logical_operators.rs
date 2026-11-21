@@ -51,6 +51,21 @@ fn transparent_operand(expr: &Expr) -> Option<&Expr> {
 	}
 }
 
+fn count_chain<'a>(left: &'a Expr, right: &'a Expr, counted_children: &mut HashSet<NodeId>) -> usize {
+	let mut pending: Vec<&Expr> = vec![left, right];
+	let mut count: usize = 1;
+	while let Some(child) = pending.pop() {
+		if let Some((left, right)) = logical_operands(child) {
+			counted_children.insert(child.id);
+			count += 1;
+			pending.extend([left, right]);
+		} else if let Some(inner) = transparent_operand(child) {
+			pending.push(inner);
+		}
+	}
+	count
+}
+
 impl Pass {
 	pub(super) fn new(config: Config) -> Self {
 		Self {
@@ -69,29 +84,20 @@ impl EarlyLintPass for Pass {
 		let Some((left, right)) = logical_operands(expr) else {
 			return;
 		};
-		let mut pending: Vec<&Expr> = vec![left, right];
-		let mut count: usize = 1;
-		while let Some(child) = pending.pop() {
-			if let Some((left, right)) = logical_operands(child) {
-				self.counted_children.insert(child.id);
-				count += 1;
-				pending.extend([left, right]);
-			} else if let Some(inner) = transparent_operand(child) {
-				pending.push(inner);
-			}
-		}
+		let count: usize = count_chain(left, right, &mut self.counted_children);
 		let max: usize = self.config.max;
 		// A macro may expand the same caller-written expression more than once.
 		let new_violation: bool = count > max && self.reported.insert(expr.span);
-		if new_violation {
-			cx.emit_span_lint(
-				MAX_LOGICAL_OPERATORS,
-				expr.span,
-				DiagDecorator(|diag: &mut Diag<'_>| {
-					diag.primary_message(format!("boolean chain has {count} logical operators; maximum is {max}"));
-					diag.help("extract a meaningful predicate while preserving short-circuit evaluation");
-				}),
-			);
+		if !new_violation {
+			return;
 		}
+		cx.emit_span_lint(
+			MAX_LOGICAL_OPERATORS,
+			expr.span,
+			DiagDecorator(|diag: &mut Diag<'_>| {
+				diag.primary_message(format!("boolean chain has {count} logical operators; maximum is {max}"));
+				diag.help("extract a meaningful predicate while preserving short-circuit evaluation");
+			}),
+		);
 	}
 }
