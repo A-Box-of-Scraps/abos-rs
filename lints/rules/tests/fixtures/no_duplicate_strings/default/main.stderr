@@ -1,0 +1,52 @@
+warning: string literal appears 3 times in this file
+  --> $DIR/main.rs:13:7
+   |
+LL | const REQUEST_ID: &str = "request-id";
+   |                          ------------ already named by `REQUEST_ID`
+...
+LL |     send(r"request-id");
+   |          ^^^^^^^^^^^^^
+LL |     assert_eq!(REQUEST_ID, "request/x2did");
+   |                            --------------- also used here
+   |
+   = help: reuse `REQUEST_ID` where it is in scope
+   = note: requested on the command line with `-W no-duplicate-strings`
+
+warning: string literal appears 3 times in this file
+  --> $DIR/main.rs:20:7
+   |
+LL |     send("across tests");
+   |          ^^^^^^^^^^^^^^
+...
+LL |     const USED: &str = "across tests";
+   |                        -------------- already named by `USED`
+LL |     fn test() { super::send("across tests"); }
+   |                             -------------- also used here
+   |
+   = help: reuse `USED` where it is in scope
+
+warning: string literal appears 3 times in this file
+  --> $DIR/main.rs:21:17
+   |
+LL |     println!("{}", "formatted value");
+   |                    ^^^^^^^^^^^^^^^^^
+LL |     let _ = ("formatted value", "formatted value");
+   |              -----------------  ----------------- also used here
+   |              |
+   |              also used here
+   |
+   = help: extract a descriptive `const` and reuse it
+
+warning: string literal appears 4 times in this file
+  --> $DIR/auxiliary/other.rs:4:11
+   |
+LL |     let _ = ("module-local", "module-local", "module-local", "module-local");
+   |              ^^^^^^^^^^^^^^  --------------  --------------  -------------- also used here
+   |                              |               |
+   |                              |               also used here
+   |                              also used here
+   |
+   = help: extract a descriptive `const` and reuse it
+
+warning: 4 warnings emitted
+

@@ -6,6 +6,7 @@ extern crate rustc_hir;
 extern crate rustc_lint;
 extern crate rustc_lint_defs;
 extern crate rustc_middle;
+extern crate rustc_parse;
 extern crate rustc_session;
 extern crate rustc_span;
 
@@ -13,6 +14,7 @@ mod explicit_binding_types;
 mod file_max_length;
 mod logical_operators;
 mod max_logical_operators;
+mod no_duplicate_strings;
 mod no_inline_logical_conditions;
 mod no_magic_numbers;
 mod tests_outside_src;
@@ -29,6 +31,7 @@ dylint_linting::dylint_library!();
 struct Config {
 	file_max_length: file_max_length::Config,
 	max_logical_operators: max_logical_operators::Config,
+	no_duplicate_strings: no_duplicate_strings::Config,
 }
 
 #[allow(unsafe_code, reason = "Dylint resolves this entry point by symbol name")]
@@ -40,6 +43,7 @@ pub fn register_lints(session: &Session, store: &mut LintStore) {
 		explicit_binding_types::EXPLICIT_BINDING_TYPES,
 		file_max_length::FILE_MAX_LENGTH,
 		max_logical_operators::MAX_LOGICAL_OPERATORS,
+		no_duplicate_strings::NO_DUPLICATE_STRINGS,
 		no_inline_logical_conditions::NO_INLINE_LOGICAL_CONDITIONS,
 		no_magic_numbers::NO_MAGIC_NUMBERS,
 		tests_outside_src::TESTS_OUTSIDE_SRC,
@@ -56,6 +60,7 @@ pub fn register_lints(session: &Session, store: &mut LintStore) {
 	store.register_early_lint_pass(Box::new(move || {
 		Box::new(max_logical_operators::Pass::new(config.max_logical_operators))
 	}));
+	no_duplicate_strings::register(store, config.no_duplicate_strings);
 	tests_outside_src::register(store);
 	explicit_binding_types::register(store);
 	store.register_early_lint_pass(Box::new(move || {

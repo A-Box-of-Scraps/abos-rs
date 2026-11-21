@@ -1,0 +1,19 @@
+warning: string literal appears 2 times in this file
+  --> $DIR/values.rs:2:11
+   |
+LL |     let _ = ("", "");
+   |              ^^  -- also used here
+   |
+   = help: extract a descriptive `const` and reuse it
+   = note: requested on the command line with `-W no-duplicate-strings`
+
+warning: string literal appears 2 times in this file
+  --> $DIR/values.rs:3:33
+   |
+LL |     let _ = ("ignored", "ignored", "Ignored", "Ignored");
+   |                                    ^^^^^^^^^  --------- also used here
+   |
+   = help: extract a descriptive `const` and reuse it
+
+warning: 2 warnings emitted
+
