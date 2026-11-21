@@ -39,37 +39,39 @@ run = "cargo doc --locked --workspace --all-features -q --no-deps"
 run = "cargo clippy --fix --locked --workspace --all-features -q"
 
 [tasks]
+# Build
+build = { depends = ["build:packages", "build:lints"] }
+"build:packages" = { extends = "rust:build", dir = "." }
+"build:hello-world" = { run = "cargo build --locked --package hello-world" }
+"build:lints" = { extends = "rust:build", dir = "lints" }
+
 # Check
 check = { depends = ["fmt:check", "lint", "check:duplicates", "test"] }
 "check:duplicates" = { run = "jscpd --no-tips" }
 
 # Format
 fmt = { depends = ["fmt:packages", "fmt:lints", "fmt:config"] }
+
+"fmt:packages" = { extends = "rust:fmt", dir = "." }
+"fmt:lints" = { extends = "rust:fmt", dir = "lints" }
+"fmt:config" = { depends = ["mise:fmt", "dprint:fmt"] }
+
+"mise:fmt" = { run = "mise fmt" }
+"dprint:fmt" = { run = "dprint fmt --log-level warn" }
+
+# Format check
 "fmt:check" = { depends = [
   "fmt:packages:check",
   "fmt:lints:check",
   "fmt:config:check",
 ] }
 
-"fmt:packages" = { extends = "rust:fmt", dir = "." }
 "fmt:packages:check" = { extends = "rust:fmt:check", dir = "." }
-"fmt:lints" = { extends = "rust:fmt", dir = "lints" }
 "fmt:lints:check" = { extends = "rust:fmt:check", dir = "lints" }
-
-"fmt:config" = { depends = ["mise:fmt", "dprint:fmt"] }
 "fmt:config:check" = { depends = ["mise:fmt:check", "dprint:fmt:check"] }
 
-"mise:fmt" = { run = "mise fmt" }
 "mise:fmt:check" = { run = "mise fmt --check" }
-
-"dprint:fmt" = { run = "dprint fmt --log-level warn" }
 "dprint:fmt:check" = { run = "dprint check --log-level warn" }
-
-# Build
-build = { depends = ["build:packages", "build:lints"] }
-"build:packages" = { extends = "rust:build", dir = "." }
-"build:hello-world" = { run = "cargo build --locked --package hello-world" }
-"build:lints" = { extends = "rust:build", dir = "lints" }
 
 # Lint
 lint = { depends = [
