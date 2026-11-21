@@ -5,7 +5,6 @@ import json
 import os
 import sys
 
-
 METRICS = ("regions", "functions", "lines")
 
 

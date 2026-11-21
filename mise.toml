@@ -4,6 +4,8 @@ cargo-nextest = "0.9.152"
 "cargo:jscpd" = "5.4.3"
 dprint = "0.65.0"
 mold = { version = "3.0.0", os = ["linux"] }
+ruff = "0.17.6"
+"pypi:basedpyright" = "1.40.2"
 
 [settings]
 task.output = "interleave"
@@ -33,7 +35,10 @@ fmt = { depends = ["fmt:rust", "fmt:lints", "fmt:config"] }
 
 "fmt:rust" = { run = "cargo fmt {{vars.cargo_fmt}} {{vars.quiet}}" }
 "fmt:rust:check" = { run = "cargo fmt {{vars.cargo_fmt}} {{vars.quiet}} {{vars.fmt_check}}" }
-"fmt:config" = { run = ["mise fmt {{vars.quiet}}", "dprint fmt --log-level warn"] }
+"fmt:config" = { run = [
+  "mise fmt {{vars.quiet}}",
+  "dprint fmt --log-level warn",
+] }
 "fmt:config:check" = { run = [
   "mise fmt {{vars.fmt_check}} {{vars.quiet}}",
   "dprint check --log-level warn",
@@ -48,7 +53,7 @@ build = { depends = ["build:rust", "build:lints"] }
 "build:lints" = { dir = "lints", run = "cargo build {{vars.cargo_workspace}}" }
 
 # Lint
-lint = { depends = ["lint:rust", "lint:lints"] }
+lint = { depends = ["lint:rust", "lint:lints", "lint:python"] }
 
 "lint:rust" = { depends = [
   "lint:rust:docs",
@@ -60,10 +65,21 @@ lint = { depends = ["lint:rust", "lint:lints"] }
 ], dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy {{vars.cargo_workspace}} --all-targets {{vars.cargo_features}} {{vars.quiet}}" }
 "lint:lints:docs" = { dir = "lints", env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}} --no-deps" }
 
+"lint:python" = { run = ["ruff check scripts", "basedpyright scripts"] }
+
 ## Lint fixes
-"lint:fix" = { depends = ["lint:rust:fix", "lint:lints:fix"] }
+"lint:fix" = { depends = [
+  "lint:rust:fix",
+  "lint:lints:fix",
+  "lint:python:fix",
+] }
 "lint:rust:fix" = { run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}}" }
 "lint:lints:fix" = { dir = "lints", run = "cargo clippy --fix {{vars.cargo_workspace}} {{vars.cargo_features}} {{vars.quiet}}" }
+
+"lint:python:fix" = { run = [
+  "ruff check --fix scripts",
+  "basedpyright scripts",
+] }
 
 # Test
 test = { depends = ["test:rust", "test:lints"] }
