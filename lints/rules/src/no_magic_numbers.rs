@@ -33,9 +33,8 @@ impl Pass {
 	}
 
 	fn associated_const(&mut self, item: &AssocItem) {
-		if let AssocItemKind::Const(item) = &item.kind
-			&& let Some(body) = &item.body
-		{
+		let AssocItemKind::Const(item) = &item.kind else { return };
+		if let Some(body) = &item.body {
 			self.name(body);
 		}
 	}
@@ -77,9 +76,10 @@ fn check_literal(cx: &EarlyContext<'_>, span: Span, token: token::Lit) {
 
 impl EarlyLintPass for Pass {
 	fn check_local(&mut self, _: &EarlyContext<'_>, local: &Local) {
-		if matches!(local.pat.kind, PatKind::Ident(_, _, None))
-			&& let Some(value) = local.kind.init()
-		{
+		if !matches!(local.pat.kind, PatKind::Ident(_, _, None)) {
+			return;
+		}
+		if let Some(value) = local.kind.init() {
 			self.name(value);
 		}
 	}
@@ -130,8 +130,11 @@ impl EarlyLintPass for Pass {
 					self.name(&field.expr);
 				}
 			}
-			ExprKind::Lit(token) if !self.named.remove(&expr.id) && !expr.span.from_expansion() => {
-				check_literal(cx, expr.span, *token);
+			ExprKind::Lit(token) => {
+				let unnamed_source_literal: bool = !self.named.remove(&expr.id) && !expr.span.from_expansion();
+				if unnamed_source_literal {
+					check_literal(cx, expr.span, *token);
+				}
 			}
 			_ => {}
 		}

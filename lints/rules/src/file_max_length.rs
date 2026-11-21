@@ -43,18 +43,20 @@ impl Pass {
 	}
 
 	fn check_source(&mut self, cx: &EarlyContext<'_>, span: Span) {
-		if span.is_dummy() || span.from_expansion() {
+		let synthetic: bool = span.is_dummy() || span.from_expansion();
+		if synthetic {
 			return;
 		}
 		let file: Arc<SourceFile> = cx.sess().source_map().lookup_source_file(span.lo());
-		if !self.seen.insert(file.start_pos) || file.is_imported() {
+		let already_checked_or_imported: bool = !self.seen.insert(file.start_pos) || file.is_imported();
+		if already_checked_or_imported {
 			return;
 		}
 		let FileName::Real(name) = &file.name else { return };
 		let Some(path) = name.local_path() else { return };
-		if path.extension().is_none_or(|ext| ext != "rs")
-			|| self.out_dir.as_ref().is_some_and(|dir| path.starts_with(dir))
-		{
+		let skip_file: bool = path.extension().is_none_or(|ext| ext != "rs")
+			|| self.out_dir.as_ref().is_some_and(|dir| path.starts_with(dir));
+		if skip_file {
 			return;
 		}
 		let limit: usize = self.config.max_lines;

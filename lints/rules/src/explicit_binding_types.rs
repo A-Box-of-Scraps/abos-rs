@@ -101,7 +101,8 @@ fn struct_literal<'tcx>(cx: &LateContext<'tcx>, path: &QPath<'tcx>, result: Ty<'
 }
 
 fn shows_type<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, macros: &MacroCalls, binding: Span) -> bool {
-	if expr.span.from_expansion() || macros.hides(expr.span, binding) {
+	let hidden_by_macro: bool = expr.span.from_expansion() || macros.hides(expr.span, binding);
+	if hidden_by_macro {
 		return false;
 	}
 	match expr.kind {
@@ -113,9 +114,15 @@ fn shows_type<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, macros: &MacroCal
 		ExprKind::Tup(parts) => parts.iter().all(|part| shows_type(cx, part, macros, binding)),
 		ExprKind::Array(parts) => !parts.is_empty() && parts.iter().all(|part| shows_type(cx, part, macros, binding)),
 		ExprKind::Struct(path, ..) => struct_literal(cx, path, cx.typeck_results().expr_ty(expr)),
-		ExprKind::Call(callee, _) if !callee.span.from_expansion() && !macros.hides(callee.span, binding) => {
-			matches!(callee.kind, ExprKind::Path(QPath::TypeRelative(ty, segment))
-				if segment.ident.name == sym::new && named_type(cx, ty, cx.typeck_results().expr_ty(expr)))
+		ExprKind::Call(callee, _) => {
+			let visible: bool = !callee.span.from_expansion() && !macros.hides(callee.span, binding);
+			if !visible {
+				return false;
+			}
+			let ExprKind::Path(QPath::TypeRelative(ty, segment)) = callee.kind else {
+				return false;
+			};
+			segment.ident.name == sym::new && named_type(cx, ty, cx.typeck_results().expr_ty(expr))
 		}
 		_ => false,
 	}
@@ -142,11 +149,14 @@ impl<'tcx> LateLintPass<'tcx> for Pass {
 		if !user_written {
 			return;
 		}
-		if local.ty.is_some_and(|ty| !incomplete(ty)) || contains_unnameable(cx.typeck_results().pat_ty(local.pat)) {
+		let annotation_complete_or_unnameable: bool =
+			local.ty.is_some_and(|ty| !incomplete(ty)) || contains_unnameable(cx.typeck_results().pat_ty(local.pat));
+		if annotation_complete_or_unnameable {
 			return;
 		}
 		let shown: bool = shows_type(cx, init, &self.0, local.span);
-		if local.ty.is_none() && shown {
+		let initializer_suffices: bool = local.ty.is_none() && shown;
+		if initializer_suffices {
 			return;
 		}
 		let (span, message, help) = match local.ty {

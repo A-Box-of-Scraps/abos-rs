@@ -112,7 +112,8 @@ impl EarlyLintPass for SourcePass {
 		// Relative paths inside inline modules depend on how the enclosing
 		// module was loaded. For redirected modules, use rustc's resolved file.
 		let redirected: bool = self.redirected_depth > 0 || item.attrs.iter().any(predicate::may_redirect);
-		if redirected && matches!(kind, ModKind::Unloaded) {
+		let defer_to_resolved_path: bool = redirected && matches!(kind, ModKind::Unloaded);
+		if defer_to_resolved_path {
 			if test_only(&item.attrs) {
 				self.locations.redirected_modules.lock().unwrap().insert(item.span.lo());
 			}
@@ -125,7 +126,9 @@ impl EarlyLintPass for SourcePass {
 	}
 
 	fn check_item_post(&mut self, _: &EarlyContext<'_>, item: &Item) {
-		if self.redirected_depth > 0 && matches!(item.kind, ItemKind::Mod(_, _, ModKind::Loaded(..))) {
+		let leaving_redirected_module: bool =
+			self.redirected_depth > 0 && matches!(item.kind, ItemKind::Mod(_, _, ModKind::Loaded(..)));
+		if leaving_redirected_module {
 			self.redirected_depth -= 1;
 		}
 	}
@@ -173,17 +176,20 @@ impl_lint_pass!(HarnessPass => [TESTS_OUTSIDE_SRC]);
 
 impl EarlyLintPass for HarnessPass {
 	fn check_item(&mut self, cx: &EarlyContext<'_>, item: &Item) {
-		if let ItemKind::Mod(_, _, ModKind::Loaded(_, Inline::No { .. }, spans)) = &item.kind
-			&& self.0.redirected_modules.lock().unwrap().contains(&item.span.lo())
-			&& Locations::source_path(cx, spans.inner_span).is_some_and(|path| path.starts_with(&self.0.src))
-		{
-			self.0
-				.report(cx, spans.inner_span, item.span, "move this test-only code outside src/");
+		if let ItemKind::Mod(_, _, ModKind::Loaded(_, Inline::No { .. }, spans)) = &item.kind {
+			let redirected_into_src: bool = self.0.redirected_modules.lock().unwrap().contains(&item.span.lo())
+				&& Locations::source_path(cx, spans.inner_span).is_some_and(|path| path.starts_with(&self.0.src));
+			if redirected_into_src {
+				self.0
+					.report(cx, spans.inner_span, item.span, "move this test-only code outside src/");
+			}
 		}
-		if let ItemKind::Fn(function) = &item.kind
-			&& item.attrs.iter().any(
-				|a| matches!(&a.kind, AttrKind::Synthetic(kind) if matches!(**kind, SyntheticAttr::TestEntrypoint)),
-			) {
+		let ItemKind::Fn(function) = &item.kind else { return };
+		if item
+			.attrs
+			.iter()
+			.any(|a| matches!(&a.kind, AttrKind::Synthetic(kind) if matches!(**kind, SyntheticAttr::TestEntrypoint)))
+		{
 			let label: Span = function.ident.span.source_callsite();
 			self.0
 				.report(cx, item.span.source_callsite(), label, "move this test outside src/");

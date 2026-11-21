@@ -11,7 +11,9 @@ extern crate rustc_span;
 
 mod explicit_binding_types;
 mod file_max_length;
+mod logical_operators;
 mod max_logical_operators;
+mod no_inline_logical_conditions;
 mod no_magic_numbers;
 mod tests_outside_src;
 
@@ -38,10 +40,12 @@ pub fn register_lints(session: &Session, store: &mut LintStore) {
 		explicit_binding_types::EXPLICIT_BINDING_TYPES,
 		file_max_length::FILE_MAX_LENGTH,
 		max_logical_operators::MAX_LOGICAL_OPERATORS,
+		no_inline_logical_conditions::NO_INLINE_LOGICAL_CONDITIONS,
 		no_magic_numbers::NO_MAGIC_NUMBERS,
 		tests_outside_src::TESTS_OUTSIDE_SRC,
 	];
 	store.register_lints(rules);
+	store.register_early_lint_pass(Box::new(|| Box::new(no_inline_logical_conditions::Pass::default())));
 	store.register_group(
 		true,
 		"abos_rules",

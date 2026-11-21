@@ -1,11 +1,13 @@
 use std::collections::HashSet;
 
 use dylint_linting::{declare_lint, impl_lint_pass};
-use rustc_ast::{BinOpKind, Expr, ExprKind, NodeId, StmtKind, UnOp};
+use rustc_ast::{Expr, ExprKind, NodeId, Stmt, StmtKind, UnOp};
 use rustc_errors::{Diag, DiagDecorator};
 use rustc_lint::{EarlyContext, EarlyLintPass, LintContext};
 use rustc_span::Span;
 use serde::Deserialize;
+
+use crate::logical_operators::logical_operands;
 
 declare_lint! {
 	pub MAX_LOGICAL_OPERATORS,
@@ -33,26 +35,18 @@ pub(super) struct Pass {
 
 impl_lint_pass!(Pass => [MAX_LOGICAL_OPERATORS]);
 
-fn logical_operands(expr: &Expr) -> Option<(&Expr, &Expr)> {
-	if let ExprKind::Binary(op, left, right) = &expr.kind
-		&& matches!(op.node, BinOpKind::And | BinOpKind::Or)
-		&& !op.span.from_expansion()
-	{
-		Some((left, right))
-	} else {
-		None
-	}
-}
-
 fn transparent_operand(expr: &Expr) -> Option<&Expr> {
 	match &expr.kind {
 		ExprKind::Paren(inner) | ExprKind::Unary(UnOp::Not, inner) => Some(inner),
-		ExprKind::Block(block, None)
-			if let [stmt] = block.stmts.as_slice()
-				&& let StmtKind::Expr(inner) = &stmt.kind =>
-		{
-			Some(inner)
-		}
+		ExprKind::Block(block, None) => match block.stmts.as_slice() {
+			[
+				Stmt {
+					kind: StmtKind::Expr(inner),
+					..
+				},
+			] => Some(inner),
+			_ => None,
+		},
 		_ => None,
 	}
 }
@@ -88,7 +82,8 @@ impl EarlyLintPass for Pass {
 		}
 		let max: usize = self.config.max;
 		// A macro may expand the same caller-written expression more than once.
-		if count > max && self.reported.insert(expr.span) {
+		let new_violation: bool = count > max && self.reported.insert(expr.span);
+		if new_violation {
 			cx.emit_span_lint(
 				MAX_LOGICAL_OPERATORS,
 				expr.span,

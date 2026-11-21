@@ -1,0 +1,128 @@
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:17:5
+   |
+LL |     if a && b || a {} else if !accepts(a || b) {}
+   |        ^^^^^^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+   = note: requested on the command line with `-W no-inline-logical-conditions`
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:17:37
+   |
+LL |     if a && b || a {} else if !accepts(a || b) {}
+   |                                        ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:18:7
+   |
+LL |     if { a && b } {}
+   |          ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:19:15
+   |
+LL |     if identity!(a || b) {}
+   |                  ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:20:5
+   |
+LL |     if let Some(x) = Some(a) && x {}
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:21:8
+   |
+LL |     while a && b { break; }
+   |           ^^^^^^
+   |
+   = help: use a named predicate that is checked each iteration; for a pattern binding, consider a nested check that preserves when the loop exits
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:22:8
+   |
+LL |     while let Some(x) = Some(a) && x { break; }
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: use a named predicate that is checked each iteration; for a pattern binding, consider a nested check that preserves when the loop exits
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:24:19
+   |
+LL |         true if accepts(a && b) => (),
+   |                         ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:27:20
+   |
+LL |     for x in [a] { if x && b {} }
+   |                       ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:28:12
+   |
+LL |     loop { if a || b { break; } }
+   |               ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:33:5
+   |
+LL |     if a && b || a && b || a {}
+   |        ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: boolean chain has 4 logical operators; maximum is 3
+  --> $DIR/conditions.rs:33:5
+   |
+LL |     if a && b || a && b || a {}
+   |        ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: extract a meaningful predicate while preserving short-circuit evaluation
+note: the lint level is defined here
+  --> $DIR/conditions.rs:31:8
+   |
+LL | #[warn(max_logical_operators)]
+   |        ^^^^^^^^^^^^^^^^^^^^^
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:38:9
+   |
+LL |     if (if a && b { true } else { false }) {}
+   |            ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:39:27
+   |
+LL |     if (if a { true } else { a || b }) {}
+   |                              ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: avoid inline logical operators in this condition
+  --> $DIR/conditions.rs:40:29
+   |
+LL |     if (match a { true if b => a && b, _ => false }) {}
+   |                                ^^^^^^
+   |
+   = help: name the decision with a boolean binding or predicate; if a pattern introduces a binding, consider a nested check
+
+warning: 15 warnings emitted
+

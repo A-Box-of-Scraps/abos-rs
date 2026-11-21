@@ -33,15 +33,14 @@ impl Truth {
 }
 
 pub(super) fn evaluate(node: &MetaItemInner, test: Truth) -> Truth {
-	if let Some(literal) = node.lit()
-		&& let LitKind::Bool(value) = literal.kind
-	{
-		return if value { Truth::Yes } else { Truth::No };
+	if let Some(LitKind::Bool(value)) = node.lit().map(|literal| &literal.kind) {
+		return if *value { Truth::Yes } else { Truth::No };
 	}
 	let Some(meta) = node.meta_item() else {
 		return Truth::Unknown;
 	};
-	if meta.is_word() && meta.has_name(sym::test) {
+	let test_flag: bool = meta.is_word() && meta.has_name(sym::test);
+	if test_flag {
 		return test;
 	}
 	let Some(children) = meta.meta_item_list() else {
