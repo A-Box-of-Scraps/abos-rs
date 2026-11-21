@@ -4,6 +4,10 @@ Warns once per boolean chain that exceeds the operator limit. Count each `&&` an
 one kind or both. Parentheses, negation, and braces around a bare expression do not reset the count. Named bindings and
 function arguments are checked separately. Operators joining `let` chains count too.
 
+This rule checks chain length, not where the chain appears. For example, `if is_paid && is_packed` is within the
+default limit but still triggers [`no_inline_logical_conditions`](no_inline_logical_conditions.md). A named binding
+has the opposite trade-off: it can keep a condition out of the branch, but its chain must still fit the limit.
+
 ## Accepted
 
 With the default limit of three, both decisions fit:
