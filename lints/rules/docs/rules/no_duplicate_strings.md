@@ -1,7 +1,7 @@
 # no_duplicate_strings
 
-Warns once when the same string literal appears at least three times in one file and is at least ten characters long
-by default. The rule compares decoded values, so raw and ordinary strings with the same text count together. Uses in
+Warns once when the same string literal appears at least three times in one file and is at least ten characters long by
+default. The rule compares decoded values, so raw and ordinary strings with the same text count together. Uses in
 different files do not add up.
 
 ## Rejected
@@ -12,8 +12,8 @@ let incoming = request.headers().get("x-request-id");
 let outgoing = response.headers().get("x-request-id");
 ```
 
-The constant initializer counts as the first occurrence. The warning points to the existing constant so you can reuse
-it instead of introducing another name.
+The constant initializer counts as the first occurrence. The warning points to the existing constant so you can reuse it
+instead of introducing another name.
 
 ## Accepted
 
