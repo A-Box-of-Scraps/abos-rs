@@ -14,29 +14,14 @@ uv = "0.13.9"
 task.output = "interleave"
 task.quiet = true
 
-[task_templates."rust:fmt"]
-run = "cargo fmt --all -q"
-
-[task_templates."rust:fmt:check"]
-run = "cargo fmt --all -q --check"
-
-[task_templates."rust:build"]
-run = "cargo build --locked --workspace"
-
-[task_templates."rust:dylint"]
-env = { DYLINT_RUSTFLAGS = "-D warnings" }
-run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q"
-
-[task_templates."rust:clippy"]
-env = { CARGO_BUILD_WARNINGS = "deny" }
-run = "cargo clippy --locked --workspace --all-targets --all-features -q"
-
-[task_templates."rust:docs"]
-env = { CARGO_BUILD_WARNINGS = "deny" }
-run = "cargo doc --locked --workspace --all-features -q --no-deps"
-
-[task_templates."rust:clippy:fix"]
-run = "cargo clippy --fix --locked --workspace --all-features -q"
+[task_templates]
+"rust:fmt" = { run = "cargo fmt --all -q" }
+"rust:fmt:check" = { run = "cargo fmt --all -q --check" }
+"rust:build" = { run = "cargo build --locked --workspace" }
+"rust:dylint" = { env = { DYLINT_RUSTFLAGS = "-D warnings" }, run = "cargo dylint --all --workspace --fail-on-no-libraries -q -- --all-targets --all-features --locked -q" }
+"rust:clippy" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo clippy --locked --workspace --all-targets --all-features -q" }
+"rust:docs" = { env = { CARGO_BUILD_WARNINGS = "deny" }, run = "cargo doc --locked --workspace --all-features -q --no-deps" }
+"rust:clippy:fix" = { run = "cargo clippy --fix --locked --workspace --all-features -q" }
 
 [tasks]
 # Build
