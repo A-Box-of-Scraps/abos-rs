@@ -41,6 +41,10 @@ rustfmt.toml
 rust-toolchain.toml
 ```
 
+## Verification
+
+`mise run check` must pass to validate changes.
+
 ## Commits & Pull Requests
 
 - Follow the Conventional Commits specification for commit messages.
