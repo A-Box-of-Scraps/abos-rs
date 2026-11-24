@@ -37,13 +37,13 @@ LICENSE
 mise.toml
 README.md
 ruff.toml
-rustfmt.toml
 rust-toolchain.toml
+rustfmt.toml
 ```
 
 ## Verification
 
-`mise run check` must pass to validate changes.
+At least `mise run check` must pass to validate changes.
 
 ## Commits & Pull Requests
 
