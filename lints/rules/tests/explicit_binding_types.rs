@@ -5,7 +5,7 @@ use tempfile::TempDir;
 
 #[test]
 fn binding_types() {
-	Test::src_base("abos_rust_rules", "test/fixtures/explicit_binding_types").run();
+	Test::src_base("abos_rust_rules", "tests/fixtures/explicit_binding_types").run();
 }
 
 #[test]

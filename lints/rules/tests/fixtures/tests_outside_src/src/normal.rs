@@ -1,4 +1,4 @@
-// rustc-env:CARGO_MANIFEST_DIR=test/fixtures/tests_outside_src
+// rustc-env:CARGO_MANIFEST_DIR=tests/fixtures/tests_outside_src
 
 #[cfg(test)]
 fn fixture() {}

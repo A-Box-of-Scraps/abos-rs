@@ -26,31 +26,3 @@ serde.workspace = true
 [dev-dependencies]
 dylint_testing.workspace = true
 tempfile.workspace = true
-
-[[test]]
-name = "explicit_binding_types"
-path = "test/explicit_binding_types.rs"
-
-[[test]]
-name = "file_max_length"
-path = "test/file_max_length.rs"
-
-[[test]]
-name = "max_logical_operators"
-path = "test/max_logical_operators.rs"
-
-[[test]]
-name = "no_duplicate_strings"
-path = "test/no_duplicate_strings.rs"
-
-[[test]]
-name = "no_inline_logical_conditions"
-path = "test/no_inline_logical_conditions.rs"
-
-[[test]]
-name = "no_magic_numbers"
-path = "test/no_magic_numbers.rs"
-
-[[test]]
-name = "tests_outside_src"
-path = "test/tests_outside_src.rs"

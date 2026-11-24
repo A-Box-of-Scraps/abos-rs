@@ -15,7 +15,7 @@ lints/
   rules/
     docs/
     src/
-    test/
+    tests/
     Cargo.toml
   Cargo.lock
   Cargo.toml

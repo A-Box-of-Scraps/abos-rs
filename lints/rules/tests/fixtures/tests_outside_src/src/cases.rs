@@ -1,4 +1,4 @@
-// rustc-env:CARGO_MANIFEST_DIR=test/fixtures/tests_outside_src
+// rustc-env:CARGO_MANIFEST_DIR=tests/fixtures/tests_outside_src
 // compile-flags: --test
 // aux-build: framework.rs
 #![allow(dead_code)]
