@@ -29,7 +29,7 @@ fn default_boundary() {
 
 #[test]
 fn configured_limit_on_module_with_group_opt_in() {
-	Test::src_base(LIBRARY, "tests/fixtures/file_max_length/configured")
+	Test::src_base(LIBRARY, "test/fixtures/file_max_length/configured")
 		.dylint_toml("[abos_rust_rules.file_max_length]\nmax_lines = 3")
 		.rustc_flags(["-Aabos_rules", "-Wfile_max_length"])
 		.run();
@@ -38,7 +38,7 @@ fn configured_limit_on_module_with_group_opt_in() {
 #[test]
 fn rule_can_be_disabled_individually_or_as_a_group() {
 	for allow in ["-Afile_max_length", "-Aabos_rules"] {
-		Test::src_base(LIBRARY, "tests/fixtures/file_max_length/disabled")
+		Test::src_base(LIBRARY, "test/fixtures/file_max_length/disabled")
 			.dylint_toml("[abos_rust_rules.file_max_length]\nmax_lines = 0")
 			.rustc_flags(["-Dwarnings", allow])
 			.run();

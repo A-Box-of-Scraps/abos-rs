@@ -4,7 +4,7 @@ const LIBRARY: &str = "abos_rust_rules";
 
 #[test]
 fn defaults() {
-	Test::src_base(LIBRARY, "tests/fixtures/no_duplicate_strings/default")
+	Test::src_base(LIBRARY, "test/fixtures/no_duplicate_strings/default")
 		.rustc_flags([
 			"--edition=2024",
 			"--cfg",
@@ -17,7 +17,7 @@ fn defaults() {
 
 #[test]
 fn configured() {
-	Test::src_base(LIBRARY, "tests/fixtures/no_duplicate_strings/configured")
+	Test::src_base(LIBRARY, "test/fixtures/no_duplicate_strings/configured")
 		.dylint_toml(
 			r#"[abos_rust_rules.no_duplicate_strings]
 threshold = 2

@@ -10,3 +10,7 @@ description = "Hello world!"
 
 [lints]
 workspace = true
+
+[[test]]
+name = "greeting"
+path = "test/greeting.rs"
